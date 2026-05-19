@@ -1,3 +1,6 @@
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <!-- IDDS JS -->
 <script src="https://unpkg.com/@idds/js@latest/dist/index.iife.js"></script>
 
@@ -478,3 +481,6 @@
     document.querySelector('.main-wrapper')?.classList.add('transition-[margin]', 'duration-300');
   });
 </script>
+
+@stack('scripts')
+

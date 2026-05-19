@@ -1,0 +1,57 @@
+<div class="space-y-4 lg:space-y-6 p-4 max-w-lg mx-auto">
+    <div class="flex flex-col items-start gap-2">
+        <img src={illustrasiImage} class="max-w-sm w-full mb-2 self-center" />
+        <div class="space-y-2">
+            <h1 class="text-xl font-bold">Login</h1>
+            <p class="text-sm">Disini kamu bisa login ke akun kamu</p>
+        </div>
+    </div>
+    <!-- Text Field -->
+    <div class="flex flex-col gap-2 md:gap-4 w-full">
+        <div class="ina-text-field">
+            <label class="ina-text-field__label">Email</label>
+            <div class="ina-text-field__wrapper">
+                <input type="text" class="ina-text-field__input" placeholder="Enter text..." />
+            </div>
+        </div>
+        <div class="flex flex-col gap-2 w-full">
+            <div class="ina-password-input">
+                <label class="ina-password-input__label">Password</label>
+                <div class="ina-password-input__wrapper">
+                    <input type="password" class="ina-password-input__input" placeholder="Enter text..." />
+                    <button type="button" class="ina-password-input__toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="ina-password-input__icon-hidden">
+                            <path d="M10.585 10.587a2 2 0 0 0 2.829 2.828"></path>
+                            <path
+                                d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87">
+                            </path>
+                            <path d="M3 3l18 18"></path>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="ina-password-input__icon-visible hidden">
+                            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
+                            <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="ina-button ina-button--link ina-button--md self-start text-xs">
+                <span class="ina-button__text">Forgot Password</span>
+            </button>
+        </div>
+    </div>
+    <!-- Button -->
+    <div class="flex flex-col gap-3 md:gap-4 w-full">
+        <button type="button" class="ina-button ina-button--primary ina-button--md">
+            <span class="ina-button__text">Masuk</span>
+        </button>
+        <p class="text-xs self-center">Atau</p>
+        <button type="button" class="ina-button ina-button--secondary ina-button--md">
+            <span class="ina-button__text">SSO CTA Button</span>
+        </button>
+    </div>
+</div>

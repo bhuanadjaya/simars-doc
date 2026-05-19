@@ -4,17 +4,14 @@
   href="https://unpkg.com/@idds/styles@latest/dist/index.min.css"
 />
 
-<!-- Tailwind CSS (CDN) -->
+<!-- Tailwind CSS (CDN) — harus di <head> agar DOM di-scan sebelum render -->
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-<!-- Tabler Icons (CDN) -->
+<!-- Tabler Icons -->
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
 />
-
-<!-- ApexCharts -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <style>
   /* Custom scrollbar for sidebar nav */
@@ -29,7 +26,7 @@
     border-radius: 20px;
   }
 
-  /* Tooltip only visible when sidebar is collapsed */
+  /* Tooltip hanya tampil saat sidebar collapsed */
   #sidebar:not(.collapsed) .ina-tooltip__content {
     display: none !important;
   }
@@ -41,3 +38,5 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>
+
+@stack('styles')
