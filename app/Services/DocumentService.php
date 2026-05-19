@@ -101,6 +101,46 @@ class DocumentService
         });
     }
 
+    public function setObsolete(Document $document, User $actor, string $reason, ?string $replacedById): void
+    {
+        if ($document->status !== 'active') {
+            throw new \RuntimeException('Only active documents can be set to obsolete.');
+        }
+
+        DB::transaction(function () use ($document, $actor, $reason, $replacedById) {
+            $document->update([
+                'status'          => 'obsolete',
+                'obsolete_date'   => today(),
+                'obsolete_reason' => $reason,
+                'obsoleted_by'    => $actor->id,
+                'replaced_by_id'  => $replacedById ?: null,
+            ]);
+
+            // Notify users who previously downloaded this document
+            $downloaderIds = \App\Models\ActivityLog::where('document_id', $document->id)
+                ->where('action', 'download_document')
+                ->distinct('user_id')
+                ->pluck('user_id');
+
+            if ($downloaderIds->isNotEmpty()) {
+                $recipients = User::whereIn('id', $downloaderIds)
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at')
+                    ->get();
+
+                if ($recipients->isNotEmpty()) {
+                    SendDocumentNotifications::dispatch(
+                        $document,
+                        $recipients,
+                        'document_obsolete',
+                        'Dokumen Obsolet: ' . $document->title,
+                        'Dokumen "' . $document->number . ' — ' . $document->title . '" telah dinyatakan obsolet.',
+                    );
+                }
+            }
+        });
+    }
+
     public function update(Document $document, array $data, ?UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document
     {
         $newPaths = [];

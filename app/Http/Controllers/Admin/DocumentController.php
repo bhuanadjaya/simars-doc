@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ObsoleteDocumentRequest;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Http\Requests\UpdateDocumentRequest;
 use App\Models\Document;
@@ -174,10 +175,42 @@ class DocumentController extends Controller
             ->with('success', 'Dokumen "' . $document->title . '" berhasil dipublikasikan.');
     }
 
+    public function obsolete(ObsoleteDocumentRequest $request, Document $document): RedirectResponse
+    {
+        if ($document->status !== 'active') {
+            return back()->with('error', 'Hanya dokumen aktif yang dapat dinyatakan obsolet.');
+        }
+
+        $this->authorize('obsolete', $document);
+
+        $user = auth()->user()->load('role');
+
+        try {
+            $this->documentService->setObsolete(
+                $document,
+                $user,
+                $request->validated('obsolete_reason'),
+                $request->validated('replaced_by_id'),
+            );
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->activityLog->log($user, 'set_obsolete', $document);
+
+        return redirect()->route('admin.documents.show', $document)
+            ->with('success', 'Dokumen "' . $document->title . '" telah dinyatakan obsolet.');
+    }
+
     public function show(Document $document): View
     {
         $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy']);
 
-        return view('admin.documents.show', compact('document'));
+        // Active documents on show page: load active docs for the replaced_by_id modal select
+        $activeDocuments = $document->status === 'active'
+            ? Document::active()->where('id', '!=', $document->id)->orderBy('title')->get(['id', 'number', 'title'])
+            : collect();
+
+        return view('admin.documents.show', compact('document', 'activeDocuments'));
     }
 }

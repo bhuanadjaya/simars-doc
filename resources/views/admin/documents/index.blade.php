@@ -245,14 +245,14 @@
                                             @endcan
                                         @endif
 
-                                        {{-- Set Obsolete placeholder (F05) --}}
+                                        {{-- Set Obsolete (F05) --}}
                                         @if ($doc->status === 'active' && in_array($user->role->name, ['super_admin', 'admin_unit']))
-                                            @can('update', $doc)
-                                                <button type="button" disabled
-                                                    title="Set Obsolet (segera hadir)"
-                                                    class="ina-button ina-button--sm !px-2 opacity-40 cursor-not-allowed bg-orange-50 text-orange-600 border border-orange-200">
+                                            @can('obsolete', $doc)
+                                                <a href="{{ route('admin.documents.show', $doc) }}#obsolete"
+                                                    title="Set Obsolet"
+                                                    class="ina-button ina-button--sm !px-2 bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100">
                                                     <i class="ti ti-archive text-sm"></i>
-                                                </button>
+                                                </a>
                                             @endcan
                                         @endif
                                     </div>

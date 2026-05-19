@@ -160,14 +160,10 @@
    - `obsolete_reason` → from request
    - `obsoleted_by` → `auth()->id()`
    - `replaced_by_id` → from request (nullable)
-4. Create record in `obsolete_retentions`:
-   - `obsolete_date` → `today()`
-   - `retention_end_date` → `today() + document_type.retention_months months`
-   - `destruction_status` → `in_retention`
-5. Send notifications to users who previously downloaded this document
+4. Send notifications to users who previously downloaded this document
    (type: `document_obsolete`) via Queue
-6. Log to `activity_logs` (action: `set_obsolete`)
-7. Redirect to document show with success message
+5. Log to `activity_logs` (action: `set_obsolete`)
+6. Redirect to document show with success message
 
 **Implementation note:**
 The obsolete confirmation should use a jQuery modal (not a new page).
@@ -447,7 +443,7 @@ Create all required files:
 
 ### For all features at once:
 ```
-Read SIMARS_DOC_Tech_Stack.md, SIMARS_DOC_Feature_Spec.md,
+Read mars-doc-tech-stack.md, simars-doc-feature.md,
 and SIMARS_DOC_Migration_Spec.md first.
 
 Implement all features F01 to F14 in order.

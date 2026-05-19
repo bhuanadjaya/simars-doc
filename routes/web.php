@@ -36,7 +36,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             ->name('documents.publish')
             ->middleware('role:super_admin,admin_unit');
 
-        // Future features (F05–F06, F10–F12, F14) will be added here
+        // F05 — Set obsolete
+        Route::patch('documents/{document}/obsolete', [AdminDocumentController::class, 'obsolete'])
+            ->name('documents.obsolete')
+            ->middleware('role:super_admin,admin_unit');
+
+        // Future features (F06, F10–F12, F14) will be added here
     });
 
 // ── User portal ───────────────────────────────────────────────────────
