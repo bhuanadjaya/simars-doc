@@ -17,12 +17,10 @@
 | F06 | Delete draft document | Admin | super_admin, admin_unit* |
 | F07 | Document search & browse portal | Portal | All |
 | F08 | View detail & download document | Portal | All (per access rules) |
-| F09 | Automatic watermark on download | Both | — (automatic) |
-| F10 | External regulation management | Admin | super_admin |
-| F11 | User & unit management | Admin | super_admin |
-| F12 | Dashboard & reports | Admin | super_admin, auditor |
-| F13 | In-app notifications | Both | All |
-| F14 | Obsolete archive & destruction | Admin | super_admin |
+| F09 | External regulation management | Admin | super_admin |
+| F10 | User & unit management | Admin | super_admin |
+| F11 | Dashboard & reports | Admin | super_admin, auditor |
+| F12 | In-app notifications | Both | All |
 
 *admin_unit: own unit documents only
 
@@ -238,12 +236,12 @@ are visible to every authenticated user.
 **Actor:** All authenticated users
 **Routes:**
 - `GET /portal/documents/{id}` → show detail (any authenticated user)
-- `GET /portal/documents/{id}/download` → trigger download with watermark
+- `GET /portal/documents/{id}/download` → trigger download
 
 **Detail page shows:**
 - All document metadata
 - Inline PDF viewer using `<iframe>` embed
-- Download PDF button
+- Download PDF button only for `super_admin`, `admin_unit` (own unit only)
 - If `parent_document_id` is set → show link "Previous version: [title]"
 - If this document has a `replaced_by_id` (meaning it is obsolete and replaced) →
   show banner: ⚠️ "This document has been replaced by: [new document title]"
@@ -254,44 +252,11 @@ are visible to every authenticated user.
 - Log to `activity_logs` (action: `view_document`)
 
 **On download:**
-- Apply watermark (see F09)
 - Log to `activity_logs` (action: `download_document`)
 
 ---
 
-## F09 — Automatic Watermark on Download
-
-**Trigger:** User clicks download in portal or admin area
-**Service:** `WatermarkService`
-
-**Process (server-side, on-the-fly):**
-1. Retrieve original PDF from storage
-2. Inject watermark text on every page:
-   ```
-   CONTROLLED DOCUMENT
-   [user full name] — [download date dd/mm/yyyy HH:mm]
-   ```
-   - Position: diagonal, centered on page
-   - Opacity: 20–30%, gray color
-3. Stream the watermarked file directly to browser
-4. **Do NOT save** the watermarked file to disk
-5. Download filename: `[number]_[title].pdf`
-
-**For auditors downloading obsolete documents (admin area):**
-```
-OBSOLETE DOCUMENT — NO LONGER VALID
-[user full name] — [download date]
-```
-
-**Library:** Use `setasign/fpdi` + `setasign/fpdf` for injecting watermark into existing PDFs.
-
-**Edge cases:**
-- File not found in storage → show error: "File unavailable, please contact Document Controller"
-- Encrypted/protected PDF → log error, show same message
-
----
-
-## F10 — External Regulation Management
+## F09 — External Regulation Management
 
 **Actor:** `super_admin`
 **Routes:** `GET|POST /admin/external-regulations` + CRUD
@@ -319,7 +284,7 @@ OBSOLETE DOCUMENT — NO LONGER VALID
 
 ---
 
-## F11 — User & Unit Management
+## F10 — User & Unit Management
 
 **Actor:** `super_admin`
 
@@ -338,12 +303,12 @@ OBSOLETE DOCUMENT — NO LONGER VALID
 
 ---
 
-## F12 — Dashboard & Reports
+## F11 — Dashboard & Reports
 
 **Actor:** `super_admin`, `auditor`
 
 **Dashboard** (`/admin`):
-- Count cards: total active documents, new this month, total obsolete, ready to destroy
+- Count cards: total active documents, new this month, total obsolete
 - Recent activity log (last 10 entries)
 
 **Reports page** (`/admin/reports`):
@@ -365,7 +330,7 @@ OBSOLETE DOCUMENT — NO LONGER VALID
 
 ---
 
-## F13 — In-App Notifications
+## F12 — In-App Notifications
 
 **Types and recipients:**
 
@@ -381,45 +346,6 @@ OBSOLETE DOCUMENT — NO LONGER VALID
 - Badge count = unread count (`is_read = false`)
 - Click notification → mark as read → redirect to document
 - Bulk sending dispatched via **Laravel Queue** (database driver)
-
----
-
-## F14 — Obsolete Archive & Destruction
-
-**Actor:** `super_admin`
-**Route:** `GET /admin/archive`
-**Controller:** `Admin\ArchiveController`
-
-**Page shows:**
-- Table of all documents with `status = obsolete`
-- Columns: title, unit, type, obsolete date, retention end date, destruction status
-- Filters: unit, type, destruction status
-- Highlight row in red if `retention_end_date < today()` and `destruction_status = in_retention`
-
-**Available actions per row:**
-
-### Mark as Ready to Destroy
-- Available if `destruction_status = in_retention` AND `retention_end_date < today()`
-- Route: `PATCH /admin/archive/{retention}/mark-ready`
-- Updates `destruction_status` → `ready_to_destroy`
-
-### Execute Destruction
-- Available if `destruction_status = ready_to_destroy`
-- Route: `PATCH /admin/archive/{retention}/destroy-record`
-- jQuery modal asks for `destruction_certificate_number` (Required)
-- Process:
-  1. Delete physical file from storage (`Storage::delete($file->file_path)`)
-  2. Set `document_files.file_path = null` for this document
-  3. Update `obsolete_retentions`:
-     - `destruction_status` → `destroyed`
-     - `destruction_certificate_number` → from input
-     - `processed_by` → `auth()->id()`
-     - `destroyed_at` → `now()`
-  4. `documents` record and `obsolete_retentions` record are **NOT deleted**
-
-**Edge cases:**
-- File already missing from storage → continue process, do not throw error
-- Print destruction certificate → generate PDF with list of destroyed documents
 
 ---
 

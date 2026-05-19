@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Models\Unit;
+use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -64,24 +65,54 @@ class DocumentController extends Controller
 
     public function show(Document $document): View
     {
-        // F08 — full implementation coming next
         abort_unless($document->status === 'active', 404);
         $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy', 'replaces']);
-        return view('portal.documents.show', compact('document'));
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $canDownload = $user->role->name === 'super_admin'
+            || ($user->role->name === 'admin_unit' && $document->owner_unit_id === $user->unit_id);
+
+        app(ActivityLogService::class)->log($user, 'view_document', $document);
+
+        return view('portal.documents.show', compact('document', 'canDownload'));
     }
 
     public function download(Document $document): RedirectResponse|Response
     {
-        // F08 — full implementation coming next
         abort_unless($document->status === 'active', 404);
-        return back()->with('error', 'Fitur unduh akan segera tersedia.');
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $canDownload = $user->role->name === 'super_admin'
+            || ($user->role->name === 'admin_unit' && $document->owner_unit_id === $user->unit_id);
+
+        abort_unless($canDownload, 403);
+
+        $pdfFile = $document->pdfFile;
+        abort_unless($pdfFile && \Illuminate\Support\Facades\Storage::disk('local')->exists($pdfFile->file_path), 404);
+
+        app(ActivityLogService::class)->log($user, 'download_document', $document);
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->download(
+            $pdfFile->file_path,
+            $pdfFile->original_filename
+        );
     }
 
     public function stream(Document $document): Response
     {
-        // F08 — full implementation coming next
         abort_unless($document->status === 'active', 404);
-        abort(501, 'Fitur stream akan segera tersedia.');
+
+        $pdfFile = $document->pdfFile;
+        abort_unless($pdfFile && \Illuminate\Support\Facades\Storage::disk('local')->exists($pdfFile->file_path), 404);
+
+        $contents = \Illuminate\Support\Facades\Storage::disk('local')->get($pdfFile->file_path);
+
+        return response($contents, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $pdfFile->original_filename . '"',
+        ]);
     }
 
     private function applyLikeSearch($query, string $q): void
