@@ -22,6 +22,11 @@ class DocumentPolicy
         return $this->ownsDocument($user, $document);
     }
 
+    public function delete(User $user, Document $document): bool
+    {
+        return $this->ownsDocument($user, $document);
+    }
+
     private function ownsDocument(User $user, Document $document): bool
     {
         if ($user->role->name === 'super_admin') {

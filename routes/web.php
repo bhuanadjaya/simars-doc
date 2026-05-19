@@ -41,13 +41,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             ->name('documents.obsolete')
             ->middleware('role:super_admin,admin_unit');
 
-        // Future features (F06, F10–F12, F14) will be added here
+        // F06 — Delete draft document
+        Route::delete('documents/{document}', [AdminDocumentController::class, 'destroy'])
+            ->name('documents.destroy')
+            ->middleware('role:super_admin,admin_unit');
+
+        // Future features (F10–F12, F14) will be added here
     });
 
 // ── User portal ───────────────────────────────────────────────────────
 Route::prefix('portal')->name('portal.')->middleware(['auth'])
     ->group(function () {
+        // F07 — Document search & browse
         Route::get('documents', [PortalDocumentController::class, 'index'])->name('documents.index');
 
-        // Future features (F07–F09, F13) will be added here
+        // F08 — View detail & download (routes defined, controllers implemented in F08)
+        Route::get('documents/{document}', [PortalDocumentController::class, 'show'])->name('documents.show');
+        Route::get('documents/{document}/download', [PortalDocumentController::class, 'download'])->name('documents.download');
+        Route::get('documents/{document}/stream', [PortalDocumentController::class, 'stream'])->name('documents.stream');
+
+        // Future features (F09, F13) will be added here
     });

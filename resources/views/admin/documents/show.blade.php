@@ -42,6 +42,17 @@
                         @csrf @method('PATCH')
                     </form>
                 @endcan
+
+                @can('delete', $document)
+                    <button type="button" id="btn-delete"
+                        class="ina-button ina-button--sm flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-300 hover:bg-red-100">
+                        <i class="ti ti-trash text-sm"></i> Hapus
+                    </button>
+                    <form id="form-delete" method="POST"
+                        action="{{ route('admin.documents.destroy', $document) }}" class="hidden">
+                        @csrf @method('DELETE')
+                    </form>
+                @endcan
             @endif
 
             @if ($document->status === 'active')
@@ -250,6 +261,14 @@ $(document).ready(function () {
         if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif dan tidak dapat dikembalikan ke Draft.')) {
             $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> Memproses...');
             $('#form-publish').submit();
+        }
+    });
+
+    // Delete confirm
+    $('#btn-delete').on('click', function () {
+        if (confirm('Hapus dokumen ini secara permanen? Tindakan ini tidak dapat dibatalkan.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
+            $('#form-delete').submit();
         }
     });
 

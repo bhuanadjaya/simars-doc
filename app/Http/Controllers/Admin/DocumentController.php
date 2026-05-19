@@ -175,6 +175,24 @@ class DocumentController extends Controller
             ->with('success', 'Dokumen "' . $document->title . '" berhasil dipublikasikan.');
     }
 
+    public function destroy(Document $document): RedirectResponse
+    {
+        if ($document->status !== 'draft') {
+            return back()->with('error', 'Hanya dokumen berstatus Draft yang dapat dihapus.');
+        }
+
+        $this->authorize('delete', $document);
+
+        $user = auth()->user()->load('role');
+
+        $this->activityLog->log($user, 'delete_document', $document);
+
+        $document->delete();
+
+        return redirect()->route('admin.documents.index')
+            ->with('success', 'Dokumen "' . $document->title . '" berhasil dihapus.');
+    }
+
     public function obsolete(ObsoleteDocumentRequest $request, Document $document): RedirectResponse
     {
         if ($document->status !== 'active') {

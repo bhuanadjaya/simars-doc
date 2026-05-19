@@ -229,6 +229,22 @@
                                             @endcan
                                         @endif
 
+                                        {{-- Delete (F06) --}}
+                                        @if ($doc->status === 'draft' && in_array($user->role->name, ['super_admin', 'admin_unit']))
+                                            @can('delete', $doc)
+                                                <button type="button"
+                                                    title="Hapus"
+                                                    data-doc-title="{{ $doc->title }}"
+                                                    class="btn-delete-row ina-button ina-button--sm !px-2 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                                                    <i class="ti ti-trash text-sm"></i>
+                                                </button>
+                                                <form class="form-delete-row hidden" method="POST"
+                                                    action="{{ route('admin.documents.destroy', $doc) }}">
+                                                    @csrf @method('DELETE')
+                                                </form>
+                                            @endcan
+                                        @endif
+
                                         {{-- Publish (F04) --}}
                                         @if ($doc->status === 'draft' && in_array($user->role->name, ['super_admin', 'admin_unit']))
                                             @can('publish', $doc)
@@ -320,6 +336,15 @@ $(document).ready(function () {
     // Auto-submit filter form on select change
     $('select[name="type"], select[name="unit"]').on('change', function () {
         $(this).closest('form').submit();
+    });
+
+    // Delete confirmation (row-level)
+    $(document).on('click', '.btn-delete-row', function () {
+        const title = $(this).data('doc-title');
+        if (confirm('Hapus dokumen "' + title + '"? Tindakan ini tidak dapat dibatalkan.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
+            $(this).closest('td').find('.form-delete-row').submit();
+        }
     });
 
     // Publish confirmation (row-level)
