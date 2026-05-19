@@ -33,6 +33,7 @@
       style="display: none; max-height: calc(100vh - 32px); overflow: auto"
     ></div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @include('partials.scripts')
   </body>
 </html>
