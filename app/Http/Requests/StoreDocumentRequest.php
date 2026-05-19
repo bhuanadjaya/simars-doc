@@ -19,11 +19,9 @@ class StoreDocumentRequest extends FormRequest
             'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
             'owner_unit_id'      => ['required', 'string', 'exists:units,id'],
             'source'             => ['required', 'in:internal,external'],
-            'revision_number'    => ['nullable', 'integer', 'min:0'],
             'effective_date'     => ['nullable', 'date'],
             'description'        => ['nullable', 'string'],
             'tags'               => ['nullable', 'string', 'max:255'],
-            'parent_document_id' => ['nullable', 'string', 'exists:documents,id'],
             'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480'],
             'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480'],
         ];
@@ -40,11 +38,4 @@ class StoreDocumentRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation(): void
-    {
-        // Default revision_number to 0 if not provided
-        if (! $this->has('revision_number') || $this->revision_number === '') {
-            $this->merge(['revision_number' => 0]);
-        }
-    }
 }

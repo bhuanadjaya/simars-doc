@@ -24,6 +24,16 @@
                 </p>
             </div>
         </div>
+
+        {{-- Actions (draft only) --}}
+        @if ($document->status === 'draft')
+            @can('update', $document)
+                <a href="{{ route('admin.documents.edit', $document) }}"
+                    class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
+                    <i class="ti ti-pencil text-sm"></i> Edit
+                </a>
+            @endcan
+        @endif
     </div>
 
     {{-- Flash messages --}}

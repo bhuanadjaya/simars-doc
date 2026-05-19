@@ -24,11 +24,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
     ->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        // F02 — Upload new document
-        Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'show'])
+        // Read-only: all admin roles (including auditor)
+        Route::resource('documents', AdminDocumentController::class)->only(['index', 'show']);
+
+        // Write operations: super_admin + admin_unit only
+        Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'edit', 'update'])
             ->middleware('role:super_admin,admin_unit');
 
-        // Future features (F03–F06, F10–F12, F14) will be added here
+        // Future features (F04–F06, F10–F12, F14) will be added here
     });
 
 // ── User portal ───────────────────────────────────────────────────────

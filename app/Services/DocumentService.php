@@ -65,6 +65,75 @@ class DocumentService
         }
     }
 
+    public function update(Document $document, array $data, ?UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document
+    {
+        $newPaths = [];
+        $oldPaths = [];
+
+        try {
+            $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths) {
+                $document->update($data);
+                $document->load('ownerUnit');
+
+                if ($pdfFile) {
+                    $existing = $document->files()->where('file_type', 'pdf')->first();
+                    if ($existing) {
+                        $oldPaths[] = $existing->file_path;
+                        $existing->delete();
+                    }
+
+                    $path = $this->saveFile($pdfFile, $document);
+                    $newPaths[] = $path;
+
+                    DocumentFile::create([
+                        'document_id'       => $document->id,
+                        'file_type'         => 'pdf',
+                        'original_filename' => $pdfFile->getClientOriginalName(),
+                        'file_path'         => $path,
+                        'file_size'         => $pdfFile->getSize(),
+                        'mime_type'         => $pdfFile->getMimeType(),
+                        'uploaded_by'       => $uploader->id,
+                    ]);
+                }
+
+                if ($docxFile) {
+                    $existing = $document->files()->where('file_type', 'docx')->first();
+                    if ($existing) {
+                        $oldPaths[] = $existing->file_path;
+                        $existing->delete();
+                    }
+
+                    $path = $this->saveFile($docxFile, $document);
+                    $newPaths[] = $path;
+
+                    DocumentFile::create([
+                        'document_id'       => $document->id,
+                        'file_type'         => 'docx',
+                        'original_filename' => $docxFile->getClientOriginalName(),
+                        'file_path'         => $path,
+                        'file_size'         => $docxFile->getSize(),
+                        'mime_type'         => $docxFile->getMimeType(),
+                        'uploaded_by'       => $uploader->id,
+                    ]);
+                }
+
+                return $document->fresh(['documentType', 'ownerUnit', 'uploader', 'files']);
+            });
+
+            // Delete old physical files only after transaction commits
+            foreach ($oldPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            return $result;
+        } catch (Throwable $e) {
+            foreach ($newPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+            throw $e;
+        }
+    }
+
     private function saveFile(UploadedFile $file, Document $document): string
     {
         $unitCode = $document->ownerUnit->code;
