@@ -31,7 +31,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
         Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'edit', 'update'])
             ->middleware('role:super_admin,admin_unit');
 
-        // Future features (F04–F06, F10–F12, F14) will be added here
+        // F04 — Publish document
+        Route::patch('documents/{document}/publish', [AdminDocumentController::class, 'publish'])
+            ->name('documents.publish')
+            ->middleware('role:super_admin,admin_unit');
+
+        // Future features (F05–F06, F10–F12, F14) will be added here
     });
 
 // ── User portal ───────────────────────────────────────────────────────

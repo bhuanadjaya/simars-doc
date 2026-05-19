@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendDocumentNotifications;
 use App\Models\Document;
 use App\Models\DocumentFile;
 use App\Models\User;
@@ -63,6 +64,41 @@ class DocumentService
             }
             throw $e;
         }
+    }
+
+    public function publish(Document $document): void
+    {
+        if ($document->status !== 'draft') {
+            throw new \RuntimeException('Only draft documents can be published.');
+        }
+
+        $hasPdf = $document->files()->where('file_type', 'pdf')->exists();
+        if (! $hasPdf) {
+            throw new \RuntimeException('Please upload a PDF file before publishing.');
+        }
+
+        DB::transaction(function () use ($document) {
+            $document->update([
+                'status'       => 'active',
+                'published_at' => today(),
+            ]);
+
+            // Load unit users for notification dispatch
+            $recipients = \App\Models\User::where('unit_id', $document->owner_unit_id)
+                ->where('is_active', true)
+                ->whereNull('deleted_at')
+                ->get();
+
+            if ($recipients->isNotEmpty()) {
+                SendDocumentNotifications::dispatch(
+                    $document,
+                    $recipients,
+                    'new_document',
+                    'Dokumen Baru: ' . $document->title,
+                    'Dokumen "' . $document->number . ' — ' . $document->title . '" telah dipublikasikan.',
+                );
+            }
+        });
     }
 
     public function update(Document $document, array $data, ?UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document

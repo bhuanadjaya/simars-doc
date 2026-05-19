@@ -229,14 +229,19 @@
                                             @endcan
                                         @endif
 
-                                        {{-- Publish placeholder (F04) --}}
+                                        {{-- Publish (F04) --}}
                                         @if ($doc->status === 'draft' && in_array($user->role->name, ['super_admin', 'admin_unit']))
-                                            @can('update', $doc)
-                                                <button type="button" disabled
-                                                    title="Publikasikan (segera hadir)"
-                                                    class="ina-button ina-button--sm !px-2 opacity-40 cursor-not-allowed bg-green-50 text-green-600 border border-green-200">
+                                            @can('publish', $doc)
+                                                <button type="button"
+                                                    title="Publikasikan"
+                                                    data-publish-url="{{ route('admin.documents.publish', $doc) }}"
+                                                    class="btn-publish-row ina-button ina-button--sm !px-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100">
                                                     <i class="ti ti-send text-sm"></i>
                                                 </button>
+                                                <form class="form-publish-row hidden" method="POST"
+                                                    action="{{ route('admin.documents.publish', $doc) }}">
+                                                    @csrf @method('PATCH')
+                                                </form>
                                             @endcan
                                         @endif
 
@@ -315,6 +320,14 @@ $(document).ready(function () {
     // Auto-submit filter form on select change
     $('select[name="type"], select[name="unit"]').on('change', function () {
         $(this).closest('form').submit();
+    });
+
+    // Publish confirmation (row-level)
+    $(document).on('click', '.btn-publish-row', function () {
+        if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
+            $(this).closest('td').find('.form-publish-row').submit();
+        }
     });
 });
 </script>

@@ -152,6 +152,28 @@ class DocumentController extends Controller
             ->with('success', 'Document "' . $document->title . '" updated successfully.');
     }
 
+    public function publish(Document $document): RedirectResponse
+    {
+        if ($document->status !== 'draft') {
+            return back()->with('error', 'Hanya dokumen berstatus Draft yang dapat dipublikasikan.');
+        }
+
+        $this->authorize('publish', $document);
+
+        $user = auth()->user()->load('role');
+
+        try {
+            $this->documentService->publish($document);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->activityLog->log($user, 'publish_document', $document);
+
+        return redirect()->route('admin.documents.show', $document)
+            ->with('success', 'Dokumen "' . $document->title . '" berhasil dipublikasikan.');
+    }
+
     public function show(Document $document): View
     {
         $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy']);

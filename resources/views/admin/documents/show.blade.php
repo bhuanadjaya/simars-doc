@@ -25,13 +25,23 @@
             </div>
         </div>
 
-        {{-- Actions (draft only) --}}
+        {{-- Actions --}}
         @if ($document->status === 'draft')
-            @can('update', $document)
-                <a href="{{ route('admin.documents.edit', $document) }}"
-                    class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
-                    <i class="ti ti-pencil text-sm"></i> Edit
-                </a>
+            @can('publish', $document)
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.documents.edit', $document) }}"
+                        class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
+                        <i class="ti ti-pencil text-sm"></i> Edit
+                    </a>
+                    <button type="button" id="btn-publish"
+                        class="ina-button ina-button--primary ina-button--sm flex items-center gap-1.5">
+                        <i class="ti ti-send text-sm"></i> Publikasikan
+                    </button>
+                    <form id="form-publish" method="POST"
+                        action="{{ route('admin.documents.publish', $document) }}" class="hidden">
+                        @csrf @method('PATCH')
+                    </form>
+                </div>
             @endcan
         @endif
     </div>
@@ -155,3 +165,16 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $('#btn-publish').on('click', function () {
+        if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif dan tidak dapat dikembalikan ke Draft.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> Memproses...');
+            $('#form-publish').submit();
+        }
+    });
+});
+</script>
+@endpush
