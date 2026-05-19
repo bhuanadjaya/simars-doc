@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
 use App\Http\Controllers\Portal\DocumentController as PortalDocumentController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +24,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
     ->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        // Future features (F02–F06, F10–F12, F14) will be added here
+        // F02 — Upload new document
+        Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'show'])
+            ->middleware('role:super_admin,admin_unit');
+
+        // Future features (F03–F06, F10–F12, F14) will be added here
     });
 
 // ── User portal ───────────────────────────────────────────────────────

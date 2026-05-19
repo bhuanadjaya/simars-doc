@@ -67,13 +67,11 @@
 | `document_type_id` | select | Required, from active `document_types` |
 | `owner_unit_id` | select | Required. admin_unit: auto-filled with own unit (disabled). super_admin: free choice. |
 | `source` | select | Required: `internal` / `external` |
-| `revision_number` | number input | Default 0. Enter manually if this is a revision. |
 | `effective_date` | date picker | Optional |
 | `description` | textarea | Optional |
 | `tags` | text input | Optional, comma-separated |
 | PDF file | file upload | Required. `.pdf` only. Max 20MB. |
 | DOCX file | file upload | Optional. `.docx` only. Max 20MB. |
-| `parent_document_id` | select | Optional. Select from existing documents (for revisions). |
 
 **Process after submit:**
 1. Validate via `StoreDocumentRequest`
@@ -433,10 +431,10 @@ OBSOLETE DOCUMENT — NO LONGER VALID
 
 ### For a single feature:
 ```
-Read SIMARS_DOC_Tech_Stack.md and SIMARS_DOC_Feature_Spec.md first.
+Read simars-doc-tech-stack.md and simars-doc-feature.md first.
 
-Implement feature [F0X — feature name] as specified in Feature_Spec.md.
-Follow all conventions in Tech_Stack.md (Blade + Controller + jQuery, English naming).
+Implement feature [F0X — feature name] as specified in simars-doc-feature.md.
+Follow all conventions in simars-doc-tech-stack.md (Blade + Controller + jQuery, English naming).
 
 Create all required files:
 - Controller in app/Http/Controllers/Admin/ or Portal/
