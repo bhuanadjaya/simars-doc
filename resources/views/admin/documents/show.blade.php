@@ -8,7 +8,7 @@
     {{-- Page header --}}
     <div class="flex items-start justify-between mb-6">
         <div class="flex items-start gap-3">
-            <a href="{{ route('admin.dashboard') }}" class="ina-button ina-button--secondary ina-button--sm mt-0.5 flex items-center gap-1">
+            <a href="{{ route('admin.documents.index') }}" class="ina-button ina-button--secondary ina-button--sm mt-0.5 flex items-center gap-1">
                 <i class="ti ti-arrow-left text-sm"></i>
             </a>
             <div>
@@ -165,7 +165,11 @@
         @else
             <div class="space-y-3">
                 @foreach ($document->files as $file)
-                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50
+                        {{ $file->file_type === 'pdf' ? 'hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors' : '' }}"
+                        @if ($file->file_type === 'pdf')
+                            onclick="openPreview('{{ route('admin.documents.stream', $document) }}')"
+                        @endif>
                         <div class="flex items-center gap-3">
                             <i class="ti {{ $file->file_type === 'pdf' ? 'ti-file-type-pdf text-red-500' : 'ti-file-type-docx text-blue-500' }} text-2xl"></i>
                             <div>
@@ -173,10 +177,26 @@
                                 <p class="text-xs text-gray-400">
                                     {{ strtoupper($file->file_type) }} &middot;
                                     {{ number_format($file->file_size / 1024 / 1024, 2) }} MB
+                                    @if ($file->file_type === 'pdf')
+                                        &middot; <span class="text-blue-500">klik untuk pratinjau</span>
+                                    @else
+                                        &middot; <span class="text-gray-400">pratinjau tidak tersedia</span>
+                                    @endif
                                 </p>
                             </div>
                         </div>
-                        <span class="ina-badge ina-badge--info ina-badge--sm uppercase">{{ $file->file_type }}</span>
+                        <div class="flex items-center gap-2">
+                            @if ($file->file_type === 'pdf')
+                                <span class="ina-badge ina-badge--info ina-badge--sm uppercase">PDF</span>
+                                <i class="ti ti-eye text-gray-400 text-base"></i>
+                            @else
+                                <a href="{{ route('admin.documents.download', [$document, 'type' => 'docx']) }}"
+                                    onclick="event.stopPropagation()"
+                                    class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1">
+                                    <i class="ti ti-download text-sm"></i> Unduh DOCX
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -185,6 +205,25 @@
 
 </div>
 @endsection
+
+{{-- PDF Preview Modal --}}
+<div id="modal-preview" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl flex flex-col w-full max-w-5xl" style="height: 90vh;">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0">
+            <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                <i class="ti ti-file-type-pdf text-red-500 text-lg"></i>
+                Pratinjau Dokumen — {{ $document->title }}
+            </p>
+            <button type="button" id="modal-preview-close"
+                class="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <i class="ti ti-x text-lg"></i>
+            </button>
+        </div>
+        <div class="flex-1 bg-gray-100 min-h-0">
+            <iframe id="preview-iframe" src="" class="w-full h-full border-0" title="Pratinjau PDF"></iframe>
+        </div>
+    </div>
+</div>
 
 {{-- Obsolete modal --}}
 @if ($document->status === 'active')
@@ -255,7 +294,25 @@
 
 @push('scripts')
 <script>
+function openPreview(streamUrl) {
+    $('#preview-iframe').attr('src', streamUrl);
+    $('#modal-preview').removeClass('hidden');
+}
+
 $(document).ready(function () {
+    // Close preview modal
+    $('#modal-preview-close').on('click', function () {
+        $('#modal-preview').addClass('hidden');
+        $('#preview-iframe').attr('src', '');
+    });
+
+    $('#modal-preview').on('click', function (e) {
+        if ($(e.target).is('#modal-preview')) {
+            $('#modal-preview').addClass('hidden');
+            $('#preview-iframe').attr('src', '');
+        }
+    });
+
     // Publish confirm
     $('#btn-publish').on('click', function () {
         if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif dan tidak dapat dikembalikan ke Draft.')) {

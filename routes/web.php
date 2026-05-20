@@ -55,6 +55,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             ->name('documents.destroy')
             ->middleware('role:super_admin,admin_unit');
 
+        // PDF stream for admin preview modal (all admin roles)
+        Route::get('documents/{document}/stream', [AdminDocumentController::class, 'stream'])
+            ->name('documents.stream');
+
+        // File download for admin (all admin roles)
+        Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])
+            ->name('documents.download');
+
         // F09 — External Regulation Management (super_admin only)
         Route::middleware('role:super_admin')->group(function () {
             Route::resource('external-regulations', ExternalRegulationController::class);

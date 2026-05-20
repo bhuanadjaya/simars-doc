@@ -13,6 +13,8 @@ use App\Services\ActivityLogService;
 use App\Services\DocumentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Throwable;
 
@@ -218,6 +220,29 @@ class DocumentController extends Controller
 
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'Dokumen "' . $document->title . '" telah dinyatakan obsolet.');
+    }
+
+    public function download(Document $document): Response|RedirectResponse
+    {
+        $fileType = request()->query('type', 'pdf');
+        $file     = $document->files()->where('file_type', $fileType)->first();
+
+        abort_unless($file && Storage::disk('local')->exists($file->file_path), 404);
+
+        return Storage::disk('local')->download($file->file_path, $file->original_filename);
+    }
+
+    public function stream(Document $document): Response
+    {
+        $pdfFile = $document->files()->where('file_type', 'pdf')->first();
+        abort_unless($pdfFile && Storage::disk('local')->exists($pdfFile->file_path), 404);
+
+        $contents = Storage::disk('local')->get($pdfFile->file_path);
+
+        return response($contents, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $pdfFile->original_filename . '"',
+        ]);
     }
 
     public function show(Document $document): View
