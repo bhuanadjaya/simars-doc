@@ -8,13 +8,22 @@
     <link rel="stylesheet" href="https://unpkg.com/@idds/styles@latest/dist/index.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+    <style>
+        :root,
+        [data-brand] {
+            --ina-primary-primary: #2596be;
+            --ina-primary-600: #1c7aa8;
+            --ina-primary-700: #166d96;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-md overflow-hidden">
 
         {{-- Header banner --}}
-        <div class="bg-[#b42b2d] px-8 py-6">
+        {{-- <div class="bg-[#b42b2d] px-8 py-6">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
                     RS
@@ -24,10 +33,11 @@
                     <p class="text-white/75 text-xs">Sistem Manajemen Dokumen Rumah Sakit</p>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
         {{-- Form area --}}
         <div class="px-8 py-8 space-y-5">
+            <img src="/images/logo.png" class="max-w-sm w-full mb-4 self-center" />
             <div>
                 <h2 class="text-xl font-bold text-gray-900">Masuk</h2>
                 <p class="text-sm text-gray-500 mt-1">Masukkan kredensial akun Anda untuk melanjutkan</p>

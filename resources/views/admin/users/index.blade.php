@@ -110,7 +110,7 @@
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-[#b42b2d] text-white flex items-center justify-center text-xs font-semibold shrink-0">
+                                    <div class="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center text-xs font-semibold shrink-0">
                                         {{ strtoupper(substr($user->name, 0, 2)) }}
                                     </div>
                                     <div>

@@ -68,7 +68,7 @@
                     @foreach ($mostActiveUsers as $index => $entry)
                         <div class="flex items-center gap-3 px-5 py-3">
                             <span class="text-lg font-bold text-gray-200 w-7 shrink-0 text-center">{{ $index + 1 }}</span>
-                            <div class="w-8 h-8 rounded-full bg-[#b42b2d] text-white flex items-center justify-center text-xs font-semibold shrink-0">
+                            <div class="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center text-xs font-semibold shrink-0">
                                 {{ strtoupper(substr($entry->user?->name ?? '?', 0, 2)) }}
                             </div>
                             <div class="flex-1 min-w-0">

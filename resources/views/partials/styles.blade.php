@@ -39,4 +39,13 @@
   }
 </style>
 
+<style>
+  :root,
+  [data-brand] {
+    --ina-primary-primary: #2596be;
+    --ina-primary-600: #1c7aa8;
+    --ina-primary-700: #166d96;
+  }
+</style>
+
 @stack('styles')

@@ -52,7 +52,7 @@
 
       {{-- User info --}}
       <div class="flex items-center gap-2 text-sm">
-        <div class="w-8 h-8 rounded-full bg-[#b42b2d] text-white flex items-center justify-center font-semibold text-xs shrink-0">
+        <div class="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-semibold text-xs shrink-0">
           {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
         </div>
         <span class="text-gray-700 font-medium hidden md:block max-w-[120px] truncate">{{ auth()->user()->name }}</span>
