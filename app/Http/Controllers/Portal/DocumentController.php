@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
@@ -78,7 +79,7 @@ class DocumentController extends Controller
         return view('portal.documents.show', compact('document', 'canDownload'));
     }
 
-    public function download(Document $document): RedirectResponse|Response
+    public function download(Document $document): RedirectResponse|Response|StreamedResponse
     {
         abort_unless($document->status === 'active', 404);
 

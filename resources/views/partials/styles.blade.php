@@ -1,3 +1,6 @@
+<!-- Favicon -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+
 <!-- IDDS Styles -->
 <link
   rel="stylesheet"
