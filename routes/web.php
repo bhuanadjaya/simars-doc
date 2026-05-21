@@ -38,10 +38,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
         // F02–F06 — Documents
-        Route::resource('documents', AdminDocumentController::class)->only(['index', 'show']);
-
+        // create/edit harus didaftarkan sebelum show agar /create tidak tertangkap {document} wildcard
         Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'edit', 'update'])
             ->middleware('role:super_admin,admin_unit');
+
+        Route::resource('documents', AdminDocumentController::class)->only(['index', 'show']);
 
         Route::patch('documents/{document}/publish', [AdminDocumentController::class, 'publish'])
             ->name('documents.publish')
