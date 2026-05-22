@@ -167,6 +167,57 @@
             </div>
         </div>
 
+        {{-- ── Section 2b: Versi Sebelumnya ───────────────────────────────── --}}
+        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Versi Sebelumnya</h2>
+            <p class="text-xs text-gray-400 mb-4">Opsional. Isi jika dokumen ini merevisi dokumen yang sudah ada.</p>
+
+            @php $currentParent = $document->parentDocument; @endphp
+
+            {{-- Parent sudah ada tapi tidak tersedia di dropdown (sudah obsolete/sudah punya pengganti) --}}
+            @if ($currentParent && ! $availableParents->contains('id', $currentParent->id))
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700 mb-3 flex items-start gap-2">
+                    <i class="ti ti-alert-triangle shrink-0 mt-0.5"></i>
+                    <div>
+                        Dokumen sebelumnya saat ini (<strong>{{ $currentParent->number }} — {{ $currentParent->title }}</strong>)
+                        sudah tidak tersedia untuk dipilih (sudah obsolet atau sudah punya pengganti).
+                        Anda bisa menghapus pilihan ini atau biarkan.
+                    </div>
+                </div>
+                <input type="hidden" name="parent_document_id" id="parent_document_id_hidden" value="{{ old('parent_document_id', $currentParent->id) }}">
+                <div class="flex items-center gap-3">
+                    <div class="ina-text-field flex-1">
+                        <div class="ina-text-field__wrapper">
+                            <input type="text" class="ina-text-field__input bg-gray-50 text-gray-500 cursor-not-allowed"
+                                value="{{ $currentParent->number }} — {{ $currentParent->title }}" disabled>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-clear-parent"
+                        class="ina-button ina-button--secondary ina-button--sm text-red-500 shrink-0">
+                        <i class="ti ti-x text-sm"></i> Hapus
+                    </button>
+                </div>
+            @else
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="parent_document_id">Dokumen Sebelumnya</label>
+                    <div class="ina-text-field__wrapper">
+                        <select id="parent_document_id" name="parent_document_id" class="ina-text-field__input">
+                            <option value="">— Tidak ada (dokumen baru) —</option>
+                            @foreach ($availableParents as $parent)
+                                <option value="{{ $parent->id }}"
+                                    {{ old('parent_document_id', $document->parent_document_id) == $parent->id ? 'selected' : '' }}>
+                                    {{ $parent->number }} — {{ Str::limit($parent->title, 70) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Saat dokumen ini dipublikasikan, dokumen sebelumnya akan otomatis ditandai sebagai "telah digantikan".
+                    </p>
+                </div>
+            @endif
+        </div>
+
         {{-- ── Section 3: File Replacement ─────────────────────────────── --}}
         <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Berkas Dokumen</h2>
@@ -265,6 +316,14 @@ $(document).ready(function () {
 
     updateFileLabel('pdf_file', 'pdf-label', 'Klik untuk pilih PDF pengganti');
     updateFileLabel('docx_file', 'docx-label', 'Klik untuk pilih DOCX pengganti');
+
+    // Clear locked parent
+    $('#btn-clear-parent').on('click', function () {
+        $('#parent_document_id_hidden').val('');
+        $(this).closest('.flex').replaceWith(
+            '<p class="text-sm text-gray-400 italic">Dokumen sebelumnya telah dihapus.</p>'
+        );
+    });
 
     $('form').on('submit', function () {
         $('#submit-btn').prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> <span>Menyimpan...</span>');

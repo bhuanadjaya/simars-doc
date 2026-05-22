@@ -145,13 +145,28 @@
         </dl>
 
         {{-- Revision chain --}}
-        @if ($document->parentDocument)
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Merevisi Dokumen</p>
-                <p class="text-sm text-blue-700">
-                    <i class="ti ti-arrow-back-up mr-1"></i>
-                    {{ $document->parentDocument->number }} — {{ $document->parentDocument->title }}
-                </p>
+        @if ($document->parentDocument || $document->replacedBy)
+            <div class="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                @if ($document->parentDocument)
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Merevisi Dokumen</p>
+                        <a href="{{ route('admin.documents.show', $document->parentDocument) }}"
+                            class="inline-flex items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 hover:underline">
+                            <i class="ti ti-arrow-back-up"></i>
+                            {{ $document->parentDocument->number }} — {{ $document->parentDocument->title }}
+                        </a>
+                    </div>
+                @endif
+                @if ($document->replacedBy)
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Digantikan Oleh</p>
+                        <a href="{{ route('admin.documents.show', $document->replacedBy) }}"
+                            class="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-900 hover:underline">
+                            <i class="ti ti-arrow-forward-up"></i>
+                            {{ $document->replacedBy->number }} — {{ $document->replacedBy->title }}
+                        </a>
+                    </div>
+                @endif
             </div>
         @endif
     </div>
@@ -261,20 +276,36 @@
 
                         {{-- Replaced by --}}
                         <div class="ina-text-field">
-                            <label class="ina-text-field__label" for="replaced_by_id">
+                            <label class="ina-text-field__label">
                                 Digantikan Oleh <span class="text-gray-400 font-normal">(opsional)</span>
                             </label>
-                            <div class="ina-text-field__wrapper">
-                                <select id="replaced_by_id" name="replaced_by_id" class="ina-text-field__input">
-                                    <option value="">— Tidak ada pengganti —</option>
-                                    @foreach ($activeDocuments as $doc)
-                                        <option value="{{ $doc->id }}">
-                                            {{ $doc->number }} — {{ Str::limit($doc->title, 60) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <p class="text-xs text-gray-400 mt-1">Dokumen aktif yang menggantikan dokumen ini.</p>
+
+                            @if ($document->replacedBy)
+                                {{-- Auto-link sudah terjadi saat publish — tampilkan read-only --}}
+                                <input type="hidden" name="replaced_by_id" value="{{ $document->replaced_by_id }}">
+                                <div class="ina-text-field__wrapper">
+                                    <input type="text" class="ina-text-field__input bg-gray-50 text-gray-600 cursor-not-allowed"
+                                        value="{{ $document->replacedBy->number }} — {{ $document->replacedBy->title }}"
+                                        disabled>
+                                </div>
+                                <p class="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                                    <i class="ti ti-link text-xs"></i>
+                                    Terisi otomatis saat dokumen pengganti dipublikasikan.
+                                </p>
+                            @else
+                                {{-- Belum ada pengganti — tampilkan dropdown --}}
+                                <div class="ina-text-field__wrapper">
+                                    <select id="replaced_by_id" name="replaced_by_id" class="ina-text-field__input">
+                                        <option value="">— Tidak ada pengganti —</option>
+                                        @foreach ($activeDocuments as $doc)
+                                            <option value="{{ $doc->id }}">
+                                                {{ $doc->number }} — {{ Str::limit($doc->title, 60) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Dokumen aktif yang menggantikan dokumen ini.</p>
+                            @endif
                         </div>
                     </div>
 

@@ -19,9 +19,17 @@ class DocumentService
 
         try {
             return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths) {
+                // Auto-calculate revision_number from parent
+                $revisionNumber = 0;
+                if (! empty($data['parent_document_id'])) {
+                    $parent = Document::find($data['parent_document_id']);
+                    $revisionNumber = $parent ? ($parent->revision_number + 1) : 0;
+                }
+
                 $document = Document::create(array_merge($data, [
-                    'uploaded_by' => $uploader->id,
-                    'status'      => 'draft',
+                    'uploaded_by'     => $uploader->id,
+                    'status'          => 'draft',
+                    'revision_number' => $revisionNumber,
                 ]));
 
                 $document->load('ownerUnit');
@@ -82,6 +90,13 @@ class DocumentService
                 'status'       => 'active',
                 'published_at' => today(),
             ]);
+
+            // Auto-link: set parent's replaced_by_id if not already set
+            if ($document->parent_document_id) {
+                Document::where('id', $document->parent_document_id)
+                    ->whereNull('replaced_by_id')
+                    ->update(['replaced_by_id' => $document->id]);
+            }
 
             // Load unit users for notification dispatch
             $recipients = \App\Models\User::where('unit_id', $document->owner_unit_id)
@@ -148,6 +163,13 @@ class DocumentService
 
         try {
             $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths) {
+                // Recalculate revision_number if parent changed
+                $newParentId = $data['parent_document_id'] ?? null;
+                if ($newParentId !== $document->parent_document_id) {
+                    $parent = $newParentId ? Document::find($newParentId) : null;
+                    $data['revision_number'] = $parent ? ($parent->revision_number + 1) : 0;
+                }
+
                 $document->update($data);
                 $document->load('ownerUnit');
 

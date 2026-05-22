@@ -74,11 +74,12 @@ class DocumentController extends Controller
 
     public function create(): View
     {
-        $user          = auth()->user()->load('role', 'unit');
-        $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
-        $units         = Unit::where('is_active', true)->orderBy('name')->get();
+        $user             = auth()->user()->load('role', 'unit');
+        $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
+        $units            = Unit::where('is_active', true)->orderBy('name')->get();
+        $availableParents = Document::active()->whereNull('replaced_by_id')->orderBy('title')->get(['id', 'number', 'title']);
 
-        return view('admin.documents.create', compact('user', 'documentTypes', 'units'));
+        return view('admin.documents.create', compact('user', 'documentTypes', 'units', 'availableParents'));
     }
 
     public function store(StoreDocumentRequest $request): RedirectResponse
@@ -117,10 +118,15 @@ class DocumentController extends Controller
 
         $this->authorize('update', $document);
 
-        $document->load(['documentType', 'ownerUnit', 'files']);
-        $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
+        $document->load(['documentType', 'ownerUnit', 'files', 'parentDocument']);
+        $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
+        $availableParents = Document::active()
+            ->whereNull('replaced_by_id')
+            ->where('id', '!=', $document->id)
+            ->orderBy('title')
+            ->get(['id', 'number', 'title']);
 
-        return view('admin.documents.edit', compact('document', 'documentTypes'));
+        return view('admin.documents.edit', compact('document', 'documentTypes', 'availableParents'));
     }
 
     public function update(UpdateDocumentRequest $request, Document $document): RedirectResponse
@@ -250,9 +256,14 @@ class DocumentController extends Controller
     {
         $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy']);
 
-        // Active documents on show page: load active docs for the replaced_by_id modal select
+        // For obsolete modal: only show active docs that don't have a replacement yet
+        // (exclude self and any doc already claimed by another)
         $activeDocuments = $document->status === 'active'
-            ? Document::active()->where('id', '!=', $document->id)->orderBy('title')->get(['id', 'number', 'title'])
+            ? Document::active()
+                ->whereNull('replaced_by_id')
+                ->where('id', '!=', $document->id)
+                ->orderBy('title')
+                ->get(['id', 'number', 'title'])
             : collect();
 
         return view('admin.documents.show', compact('document', 'activeDocuments'));

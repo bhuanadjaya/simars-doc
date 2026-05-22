@@ -181,6 +181,31 @@
             </div>
         </div>
 
+        {{-- ── Section 3: Versi Sebelumnya ────────────────────────────────── --}}
+        @if ($availableParents->isNotEmpty())
+        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Versi Sebelumnya</h2>
+            <p class="text-xs text-gray-400 mb-4">Opsional. Isi jika dokumen ini merevisi dokumen yang sudah ada.</p>
+
+            <div class="ina-text-field">
+                <label class="ina-text-field__label" for="parent_document_id">Dokumen Sebelumnya</label>
+                <div class="ina-text-field__wrapper">
+                    <select id="parent_document_id" name="parent_document_id" class="ina-text-field__input">
+                        <option value="">— Tidak ada (dokumen baru) —</option>
+                        @foreach ($availableParents as $parent)
+                            <option value="{{ $parent->id }}" {{ old('parent_document_id') == $parent->id ? 'selected' : '' }}>
+                                {{ $parent->number }} — {{ Str::limit($parent->title, 70) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">
+                    Saat dokumen ini dipublikasikan, dokumen sebelumnya akan otomatis ditandai sebagai "telah digantikan".
+                </p>
+            </div>
+        </div>
+        @endif
+
         {{-- ── Section 4: File Upload ───────────────────────────────────── --}}
         <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Berkas Dokumen</h2>
