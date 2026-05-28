@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
 use App\Http\Controllers\Admin\ExternalRegulationController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\NotificationController;
@@ -71,6 +72,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
                 ->name('external-regulations.download');
             Route::get('external-regulations/{externalRegulation}/stream', [ExternalRegulationController::class, 'stream'])
                 ->name('external-regulations.stream');
+        });
+
+        // Document Type Management (super_admin only)
+        Route::middleware('role:super_admin')->group(function () {
+            Route::resource('document-types', DocumentTypeController::class)
+                ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+            Route::post('document-types/{documentType}/deactivate', [DocumentTypeController::class, 'deactivate'])
+                ->name('document-types.deactivate');
+            Route::post('document-types/{documentType}/activate', [DocumentTypeController::class, 'activate'])
+                ->name('document-types.activate');
         });
 
         // F10 — User & Unit Management (super_admin only)

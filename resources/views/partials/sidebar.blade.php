@@ -62,6 +62,12 @@
             <i class="ti ti-building-hospital text-lg min-w-[20px]"></i>
             <span>Unit</span>
           </a>
+
+          <a href="{{ route('admin.document-types.index') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('admin.document-types.*') ? 'bg-[#2596be]/10 text-[#2596be]' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+            <i class="ti ti-file-description text-lg min-w-[20px]"></i>
+            <span>Jenis Dokumen</span>
+          </a>
         @endif
 
         @if (in_array($role, ['super_admin', 'auditor']))
