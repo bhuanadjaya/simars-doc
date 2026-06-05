@@ -256,13 +256,11 @@
                 {{-- Tags --}}
                 <div class="ina-text-field">
                     <label class="ina-text-field__label" for="tags">Tags</label>
-                    <div class="ina-text-field__wrapper {{ $errors->has('tags') ? 'ina-text-field__wrapper--error' : '' }}">
-                        <input type="text" id="tags" name="tags"
-                            class="ina-text-field__input"
-                            placeholder="e.g. triase, igd, emergency (pisahkan dengan koma)"
-                            value="{{ old('tags') }}">
-                    </div>
-                    <p class="text-gray-400 text-xs mt-1">Kata kunci untuk pencarian, pisahkan dengan koma.</p>
+                    <input type="text" id="tags" name="tags"
+                        class="{{ $errors->has('tags') ? 'tagify-error' : '' }}"
+                        placeholder="Ketik lalu tekan Enter..."
+                        value="{{ old('tags') }}">
+                    <p class="text-gray-400 text-xs mt-1">Ketik kata kunci lalu tekan Enter atau koma untuk menambahkan tag.</p>
                     @error('tags') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
@@ -355,8 +353,25 @@
 </div>
 @endsection
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<style>
+.tagify { --tag-bg: #e0f2fe; --tag-text-color: #0369a1; --tag-remove-btn-color: #0369a1; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.35rem 0.5rem; min-height: 2.5rem; width: 100%; background: white; }
+.tagify:focus-within { border-color: #2596be; box-shadow: 0 0 0 3px rgba(37,150,190,.15); }
+.tagify.tagify-error { border-color: #ef4444; }
+.tagify__input { min-width: 80px; }
+</style>
+@endpush
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <script>
+new Tagify(document.getElementById('tags'), {
+    delimiters: ',| ',
+    trim: true,
+    originalInputValueFormat: values => values.map(v => v.value).join(', '),
+});
+
 $(document).ready(function () {
     // Toggle obsolete fields
     function toggleObsoleteFields() {
@@ -384,7 +399,6 @@ $(document).ready(function () {
     updateFileLabel('pdf_file', 'pdf-label');
     updateFileLabel('docx_file', 'docx-label');
 
-    // Disable submit button on form submit to prevent double-click
     $('form').on('submit', function () {
         $('#submit-btn').prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> <span>Mengupload...</span>');
     });
