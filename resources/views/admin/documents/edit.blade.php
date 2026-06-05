@@ -131,6 +131,44 @@
                     @error('effective_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Expired At --}}
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="expired_at">Masa Berlaku s/d</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('expired_at') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <input type="date" id="expired_at" name="expired_at"
+                            class="ina-text-field__input"
+                            value="{{ old('expired_at', $document->expired_at?->format('Y-m-d')) }}">
+                    </div>
+                    @error('expired_at') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Reminder Months --}}
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="reminder_months">Ingatkan Sebelum Expired (bulan)</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('reminder_months') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <input type="number" id="reminder_months" name="reminder_months"
+                            class="ina-text-field__input"
+                            placeholder="e.g. 3" min="1" max="60"
+                            value="{{ old('reminder_months', $document->reminder_months) }}">
+                    </div>
+                    <p class="text-gray-400 text-xs mt-1">Opsional. Hanya relevan jika masa berlaku diisi.</p>
+                    @error('reminder_months') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Visibility (super_admin only) --}}
+                @if (auth()->user()->role->name === 'super_admin')
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="visibility">Visibilitas</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('visibility') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <select id="visibility" name="visibility" class="ina-text-field__input">
+                            <option value="public" {{ old('visibility', $document->visibility) === 'public' ? 'selected' : '' }}>Publik — semua pengguna dapat mengakses</option>
+                            <option value="restricted" {{ old('visibility', $document->visibility) === 'restricted' ? 'selected' : '' }}>Terbatas — hanya Anda yang dapat mengakses</option>
+                        </select>
+                    </div>
+                    @error('visibility') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                @endif
+
             </div>
         </div>
 

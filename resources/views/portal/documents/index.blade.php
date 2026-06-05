@@ -6,9 +6,16 @@
 <div class="max-w-6xl mx-auto">
 
     {{-- Page header --}}
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Portal Dokumen</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Cari dan unduh dokumen aktif rumah sakit.</p>
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Portal Dokumen</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Cari dan unduh dokumen rumah sakit.</p>
+        </div>
+        <a href="{{ route('portal.documents.export-excel', request()->only('q','type','unit','year','status')) }}"
+            class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
+            <i class="ti ti-file-spreadsheet text-sm"></i>
+            <span class="hidden sm:inline">Export Excel</span>
+        </a>
     </div>
 
     {{-- Search bar --}}
@@ -33,13 +40,23 @@
                         @endif
                     </div>
                 </div>
-                <button type="submit" class="ina-button ina-button--primary ina-button--md px-6">
-                    Cari
-                </button>
+                <button type="submit" class="ina-button ina-button--primary ina-button--md px-6">Cari</button>
             </div>
 
             {{-- Secondary filters --}}
             <div class="flex flex-wrap gap-3 items-end">
+
+                {{-- Status --}}
+                <div class="ina-text-field w-36">
+                    <label class="ina-text-field__label text-xs">Status</label>
+                    <div class="ina-text-field__wrapper">
+                        <select name="status" class="ina-text-field__input text-sm filter-select">
+                            <option value="active" {{ request('status', 'active') === 'active' ? 'selected' : '' }}>Aktif</option>
+                            <option value="obsolete" {{ request('status') === 'obsolete' ? 'selected' : '' }}>Obsolete</option>
+                            <option value="" {{ request('status') === '' ? 'selected' : '' }}>Semua</option>
+                        </select>
+                    </div>
+                </div>
 
                 {{-- Document type --}}
                 <div class="ina-text-field w-48">
@@ -79,9 +96,7 @@
                             <select name="year" class="ina-text-field__input text-sm filter-select">
                                 <option value="">Semua Tahun</option>
                                 @foreach ($years as $year)
-                                    <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>
-                                        {{ $year }}
-                                    </option>
+                                    <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -100,7 +115,7 @@
                     </div>
                 </div>
 
-                @if (request()->hasAny(['q', 'type', 'unit', 'year', 'sort']))
+                @if (request()->hasAny(['q', 'type', 'unit', 'year', 'sort']) || request('status') !== 'active')
                     <a href="{{ route('portal.documents.index') }}"
                         class="ina-button ina-button--secondary ina-button--sm text-red-500 hover:text-red-700 self-end">
                         <i class="ti ti-x text-sm"></i> Reset
@@ -115,15 +130,12 @@
         <p class="text-sm text-gray-500">
             @if ($documents->total() > 0)
                 Menampilkan <span class="font-medium text-gray-700">{{ $documents->firstItem() }}–{{ $documents->lastItem() }}</span>
-                dari <span class="font-medium text-gray-700">{{ $documents->total() }}</span> dokumen aktif
+                dari <span class="font-medium text-gray-700">{{ $documents->total() }}</span> dokumen
                 @if (request('q'))
                     untuk <span class="font-medium text-gray-700">"{{ request('q') }}"</span>
                 @endif
             @else
                 Tidak ada dokumen ditemukan
-                @if (request()->hasAny(['q', 'type', 'unit', 'year']))
-                    — coba ubah kata kunci atau filter
-                @endif
             @endif
         </p>
     </div>
@@ -143,13 +155,14 @@
     @else
         <div class="space-y-2">
             @foreach ($documents as $doc)
-                <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+                @php $isRestricted = $doc->visibility === 'restricted' && $doc->uploaded_by !== $user->id; @endphp
+                <div class="bg-white border {{ $isRestricted ? 'border-amber-200' : 'border-gray-200 hover:border-blue-300 hover:shadow-md' }} rounded-xl shadow-sm transition-all">
                     <div class="flex items-start gap-4 p-4">
 
-                        {{-- File type icon --}}
+                        {{-- Icon --}}
                         <div class="shrink-0 mt-0.5">
-                            <div class="w-10 h-10 bg-red-50 border border-red-100 rounded-lg flex items-center justify-center">
-                                <i class="ti ti-file-type-pdf text-red-500 text-xl"></i>
+                            <div class="w-10 h-10 {{ $isRestricted ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100' }} border rounded-lg flex items-center justify-center">
+                                <i class="ti {{ $isRestricted ? 'ti-lock text-amber-500' : 'ti-file-type-pdf text-red-500' }} text-xl"></i>
                             </div>
                         </div>
 
@@ -157,20 +170,31 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
-                                    {{-- Number + badges --}}
                                     <div class="flex items-center flex-wrap gap-2 mb-1">
                                         <span class="text-xs font-mono text-gray-400">{{ $doc->number }}</span>
                                         <span class="ina-badge ina-badge--info ina-badge--sm">{{ $doc->documentType?->code }}</span>
-                                        <span class="ina-badge ina-badge--positive ina-badge--sm">Aktif</span>
+                                        @if ($doc->status === 'active')
+                                            <span class="ina-badge ina-badge--positive ina-badge--sm">Aktif</span>
+                                        @else
+                                            <span class="ina-badge ina-badge--destructive ina-badge--sm">Obsolete</span>
+                                        @endif
+                                        @if ($isRestricted)
+                                            <span class="ina-badge ina-badge--sm" style="background:#fef3c7;color:#92400e;">
+                                                <i class="ti ti-lock text-xs mr-0.5"></i> Terbatas
+                                            </span>
+                                        @endif
                                     </div>
 
-                                    {{-- Title --}}
-                                    <a href="{{ route('portal.documents.show', $doc) }}"
-                                        class="text-base font-semibold text-gray-900 hover:text-blue-700 leading-snug line-clamp-2 block">
-                                        {{ $doc->title }}
-                                    </a>
+                                    @if ($isRestricted)
+                                        <p class="text-base font-semibold text-gray-400 leading-snug line-clamp-2">{{ $doc->title }}</p>
+                                        <p class="text-xs text-amber-600 mt-1">Dokumen ini bersifat terbatas dan tidak dapat diakses.</p>
+                                    @else
+                                        <a href="{{ route('portal.documents.show', $doc) }}"
+                                            class="text-base font-semibold text-gray-900 hover:text-blue-700 leading-snug line-clamp-2 block">
+                                            {{ $doc->title }}
+                                        </a>
+                                    @endif
 
-                                    {{-- Meta --}}
                                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-400">
                                         <span class="flex items-center gap-1">
                                             <i class="ti ti-building-hospital"></i>
@@ -182,10 +206,11 @@
                                                 Berlaku: {{ $doc->effective_date->format('d/m/Y') }}
                                             </span>
                                         @endif
-                                        @if ($doc->tags)
-                                            <span class="flex items-center gap-1">
-                                                <i class="ti ti-tag"></i>
-                                                {{ $doc->tags }}
+                                        @if ($doc->expired_at && ! $isRestricted)
+                                            <span class="flex items-center gap-1 {{ $doc->expired_at->isPast() ? 'text-red-400' : 'text-orange-400' }}">
+                                                <i class="ti ti-clock"></i>
+                                                s/d {{ $doc->expired_at->format('d/m/Y') }}
+                                                @if ($doc->expired_at->isPast()) (Kadaluarsa) @endif
                                             </span>
                                         @endif
                                     </div>
@@ -193,16 +218,13 @@
 
                                 {{-- Actions --}}
                                 <div class="shrink-0 flex items-center gap-2">
-                                    <a href="{{ route('portal.documents.show', $doc) }}"
-                                        class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
-                                        <i class="ti ti-eye text-sm"></i>
-                                        <span class="hidden sm:inline">Lihat</span>
-                                    </a>
-                                    <a href="{{ route('portal.documents.download', $doc) }}"
-                                        class="ina-button ina-button--primary ina-button--sm flex items-center gap-1.5">
-                                        <i class="ti ti-download text-sm"></i>
-                                        <span class="hidden sm:inline">Unduh</span>
-                                    </a>
+                                    @if (! $isRestricted)
+                                        <a href="{{ route('portal.documents.show', $doc) }}"
+                                            class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
+                                            <i class="ti ti-eye text-sm"></i>
+                                            <span class="hidden sm:inline">Lihat</span>
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -214,21 +236,13 @@
         {{-- Pagination --}}
         @if ($documents->hasPages())
             <div class="flex items-center justify-between mt-5">
-                <p class="text-xs text-gray-500">
-                    Halaman {{ $documents->currentPage() }} dari {{ $documents->lastPage() }}
-                </p>
+                <p class="text-xs text-gray-500">Halaman {{ $documents->currentPage() }} dari {{ $documents->lastPage() }}</p>
                 <div class="flex items-center gap-1">
-                    {{-- Prev --}}
                     @if ($documents->onFirstPage())
-                        <span class="ina-button ina-button--secondary ina-button--sm opacity-40 cursor-not-allowed !px-2">
-                            <i class="ti ti-chevron-left text-sm"></i>
-                        </span>
+                        <span class="ina-button ina-button--secondary ina-button--sm opacity-40 cursor-not-allowed !px-2"><i class="ti ti-chevron-left text-sm"></i></span>
                     @else
-                        <a href="{{ $documents->previousPageUrl() }}" class="ina-button ina-button--secondary ina-button--sm !px-2">
-                            <i class="ti ti-chevron-left text-sm"></i>
-                        </a>
+                        <a href="{{ $documents->previousPageUrl() }}" class="ina-button ina-button--secondary ina-button--sm !px-2"><i class="ti ti-chevron-left text-sm"></i></a>
                     @endif
-
                     @foreach ($documents->getUrlRange(max(1, $documents->currentPage() - 2), min($documents->lastPage(), $documents->currentPage() + 2)) as $page => $url)
                         @if ($page === $documents->currentPage())
                             <span class="ina-button ina-button--primary ina-button--sm !px-3 !min-w-[32px]">{{ $page }}</span>
@@ -236,16 +250,10 @@
                             <a href="{{ $url }}" class="ina-button ina-button--secondary ina-button--sm !px-3 !min-w-[32px]">{{ $page }}</a>
                         @endif
                     @endforeach
-
-                    {{-- Next --}}
                     @if ($documents->hasMorePages())
-                        <a href="{{ $documents->nextPageUrl() }}" class="ina-button ina-button--secondary ina-button--sm !px-2">
-                            <i class="ti ti-chevron-right text-sm"></i>
-                        </a>
+                        <a href="{{ $documents->nextPageUrl() }}" class="ina-button ina-button--secondary ina-button--sm !px-2"><i class="ti ti-chevron-right text-sm"></i></a>
                     @else
-                        <span class="ina-button ina-button--secondary ina-button--sm opacity-40 cursor-not-allowed !px-2">
-                            <i class="ti ti-chevron-right text-sm"></i>
-                        </span>
+                        <span class="ina-button ina-button--secondary ina-button--sm opacity-40 cursor-not-allowed !px-2"><i class="ti ti-chevron-right text-sm"></i></span>
                     @endif
                 </div>
             </div>
@@ -258,12 +266,7 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    // Auto-submit on dropdown change
-    $('.filter-select').on('change', function () {
-        $('#filter-form').submit();
-    });
-
-    // Clear search input
+    $('.filter-select').on('change', function () { $('#filter-form').submit(); });
     $('#btn-clear-search').on('click', function () {
         $('input[name="q"]').val('');
         $('#filter-form').submit();

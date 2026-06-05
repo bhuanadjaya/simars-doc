@@ -53,6 +53,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             ->name('documents.obsolete')
             ->middleware('role:super_admin,admin_unit');
 
+        Route::post('documents/{document}/review', [AdminDocumentController::class, 'review'])
+            ->name('documents.review')
+            ->middleware('role:super_admin,admin_unit');
+
+        Route::post('documents/{document}/unreview', [AdminDocumentController::class, 'unreview'])
+            ->name('documents.unreview')
+            ->middleware('role:super_admin,admin_unit');
+
         Route::delete('documents/{document}', [AdminDocumentController::class, 'destroy'])
             ->name('documents.destroy')
             ->middleware('role:super_admin,admin_unit');
@@ -114,4 +122,5 @@ Route::prefix('portal')->name('portal.')->middleware(['auth'])
         Route::get('documents/{document}', [PortalDocumentController::class, 'show'])->name('documents.show');
         Route::get('documents/{document}/download', [PortalDocumentController::class, 'download'])->name('documents.download');
         Route::get('documents/{document}/stream', [PortalDocumentController::class, 'stream'])->name('documents.stream');
+        Route::get('documents/export-excel', [PortalDocumentController::class, 'exportExcel'])->name('documents.export-excel');
     });

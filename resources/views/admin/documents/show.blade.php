@@ -63,6 +63,28 @@
                     </button>
                 @endcan
             @endif
+
+            @if (in_array($document->status, ['active', 'obsolete']))
+                @if (! $document->is_reviewed)
+                    @can('review', $document)
+                        <button type="button" id="btn-review"
+                            class="ina-button ina-button--sm flex items-center gap-1.5 bg-purple-50 text-purple-700 border border-purple-300 hover:bg-purple-100">
+                            <i class="ti ti-clipboard-check text-sm"></i> Review
+                        </button>
+                    @endcan
+                @else
+                    @can('unreview', $document)
+                        <button type="button" id="btn-unreview"
+                            class="ina-button ina-button--sm flex items-center gap-1.5 bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200">
+                            <i class="ti ti-clipboard-x text-sm"></i> Batalkan Review
+                        </button>
+                        <form id="form-unreview" method="POST"
+                            action="{{ route('admin.documents.unreview', $document) }}" class="hidden">
+                            @csrf
+                        </form>
+                    @endcan
+                @endif
+            @endif
         </div>
     </div>
 
@@ -114,6 +136,57 @@
                 <dt class="text-gray-400 text-xs uppercase tracking-wide">Tanggal Berlaku</dt>
                 <dd class="font-medium text-gray-900 mt-0.5">
                     {{ $document->effective_date ? $document->effective_date->format('d/m/Y') : '—' }}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-gray-400 text-xs uppercase tracking-wide">Masa Berlaku s/d</dt>
+                <dd class="mt-0.5 flex items-center gap-2">
+                    @if ($document->expired_at)
+                        <span class="font-medium text-gray-900">{{ $document->expired_at->format('d/m/Y') }}</span>
+                        @if ($document->expired_at->isPast())
+                            <span class="ina-badge ina-badge--destructive ina-badge--sm">Kadaluarsa</span>
+                        @elseif ($document->reminder_months && now()->greaterThanOrEqualTo($document->expired_at->subMonths($document->reminder_months)))
+                            <span class="ina-badge ina-badge--warning ina-badge--sm">Segera Expired</span>
+                        @endif
+                    @else
+                        <span class="text-gray-400">—</span>
+                    @endif
+                </dd>
+            </div>
+            @if ($document->reminder_months)
+            <div>
+                <dt class="text-gray-400 text-xs uppercase tracking-wide">Reminder Expired</dt>
+                <dd class="font-medium text-gray-900 mt-0.5">{{ $document->reminder_months }} bulan sebelum expired</dd>
+            </div>
+            @endif
+            <div>
+                <dt class="text-gray-400 text-xs uppercase tracking-wide">Visibilitas</dt>
+                <dd class="mt-0.5">
+                    @if ($document->visibility === 'restricted')
+                        <span class="ina-badge ina-badge--warning ina-badge--sm flex items-center gap-1 w-fit">
+                            <i class="ti ti-lock text-xs"></i> Terbatas
+                        </span>
+                    @else
+                        <span class="ina-badge ina-badge--neutral ina-badge--sm">Publik</span>
+                    @endif
+                </dd>
+            </div>
+            <div>
+                <dt class="text-gray-400 text-xs uppercase tracking-wide">Status Review</dt>
+                <dd class="mt-0.5">
+                    @if ($document->is_reviewed)
+                        <span class="ina-badge ina-badge--positive ina-badge--sm flex items-center gap-1 w-fit">
+                            <i class="ti ti-clipboard-check text-xs"></i> Sudah Direview
+                        </span>
+                        @if ($document->reviewer)
+                            <p class="text-xs text-gray-400 mt-1">oleh {{ $document->reviewer->name }} · {{ $document->reviewed_at?->format('d/m/Y H:i') }}</p>
+                        @endif
+                        @if ($document->review_notes)
+                            <p class="text-xs text-gray-500 mt-1 italic">"{{ $document->review_notes }}"</p>
+                        @endif
+                    @else
+                        <span class="ina-badge ina-badge--neutral ina-badge--sm">Belum Direview</span>
+                    @endif
                 </dd>
             </div>
             <div>
@@ -323,6 +396,49 @@
     @endcan
 @endif
 
+{{-- Review modal --}}
+@if (in_array($document->status, ['active', 'obsolete']) && ! $document->is_reviewed)
+    @can('review', $document)
+        <div id="modal-review" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h3 class="font-semibold text-gray-900">Review Dokumen</h3>
+                    <button type="button" id="modal-review-close" class="text-gray-400 hover:text-gray-600">
+                        <i class="ti ti-x text-lg"></i>
+                    </button>
+                </div>
+                <form method="POST" action="{{ route('admin.documents.review', $document) }}" id="form-review">
+                    @csrf
+                    <div class="px-6 py-5 space-y-4">
+                        <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+                            <p class="font-medium">{{ $document->number }} — {{ $document->title }}</p>
+                        </div>
+                        <div class="ina-text-field">
+                            <label class="ina-text-field__label" for="review_notes">
+                                Catatan Review <span class="text-red-500">*</span>
+                            </label>
+                            <div class="ina-text-field__wrapper">
+                                <textarea id="review_notes" name="review_notes"
+                                    class="ina-text-field__input min-h-[100px] resize-y"
+                                    placeholder="Tuliskan catatan hasil review dokumen ini..."
+                                    required maxlength="2000"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+                        <button type="button" id="modal-review-cancel"
+                            class="ina-button ina-button--secondary ina-button--sm">Batal</button>
+                        <button type="submit" id="btn-review-submit"
+                            class="ina-button ina-button--sm flex items-center gap-1.5 bg-purple-600 text-white border border-purple-700 hover:bg-purple-700">
+                            <i class="ti ti-clipboard-check text-sm"></i> Simpan Review
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endcan
+@endif
+
 @push('scripts')
 <script>
 function openPreview(streamUrl) {
@@ -381,6 +497,30 @@ $(document).ready(function () {
     $('#form-obsolete').on('submit', function () {
         $('#btn-obsolete-submit').prop('disabled', true)
             .html('<i class="ti ti-loader-2 animate-spin"></i> Memproses...');
+    });
+
+    // Review modal
+    $('#btn-review').on('click', function () {
+        $('#modal-review').removeClass('hidden');
+        $('#review_notes').focus();
+    });
+    $('#modal-review-close, #modal-review-cancel').on('click', function () {
+        $('#modal-review').addClass('hidden');
+    });
+    $('#modal-review').on('click', function (e) {
+        if ($(e.target).is('#modal-review')) $('#modal-review').addClass('hidden');
+    });
+    $('#form-review').on('submit', function () {
+        $('#btn-review-submit').prop('disabled', true)
+            .html('<i class="ti ti-loader-2 animate-spin"></i> Menyimpan...');
+    });
+
+    // Unreview confirm
+    $('#btn-unreview').on('click', function () {
+        if (confirm('Batalkan review dokumen ini? Data review akan dihapus.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
+            $('#form-unreview').submit();
+        }
     });
 });
 </script>

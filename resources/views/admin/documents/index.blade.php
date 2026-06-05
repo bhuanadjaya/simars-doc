@@ -188,13 +188,21 @@
 
                                 {{-- Status badge --}}
                                 <td class="px-4 py-3">
-                                    @if ($doc->status === 'active')
-                                        <span class="ina-badge ina-badge--soft ina-badge--success ina-badge--md ina-badge--rounded-full">Aktif</span>
-                                    @elseif ($doc->status === 'draft')
-                                        <span class="ina-badge ina-badge--soft ina-badge--warning ina-badge--md ina-badge--rounded-full">Draft</span>
-                                    @else
-                                        <span class="ina-badge ina-badge--soft ina-badge--error ina-badge--md ina-badge--rounded-full">Obsolet</span>
-                                    @endif
+                                    <div class="flex flex-col gap-1">
+                                        @if ($doc->status === 'active')
+                                            <span class="ina-badge ina-badge--positive ina-badge--sm">Aktif</span>
+                                        @elseif ($doc->status === 'draft')
+                                            <span class="ina-badge ina-badge--warning ina-badge--sm">Draft</span>
+                                        @else
+                                            <span class="ina-badge ina-badge--destructive ina-badge--sm">Obsolet</span>
+                                        @endif
+                                        @if ($doc->is_reviewed)
+                                            <span class="ina-badge ina-badge--sm" style="background:#ede9fe;color:#7c3aed;">Reviewed</span>
+                                        @endif
+                                        @if ($doc->visibility === 'restricted')
+                                            <span class="ina-badge ina-badge--sm" style="background:#fef3c7;color:#92400e;">Terbatas</span>
+                                        @endif
+                                    </div>
                                 </td>
 
                                 {{-- Effective date --}}
@@ -270,6 +278,32 @@
                                                     <i class="ti ti-archive text-sm"></i>
                                                 </a>
                                             @endcan
+                                        @endif
+
+                                        {{-- Review / Unreview --}}
+                                        @if (in_array($doc->status, ['active', 'obsolete']) && in_array($user->role->name, ['super_admin', 'admin_unit']))
+                                            @if (! $doc->is_reviewed)
+                                                @can('review', $doc)
+                                                    <a href="{{ route('admin.documents.show', $doc) }}"
+                                                        title="Review Dokumen"
+                                                        class="ina-button ina-button--sm !px-2 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100">
+                                                        <i class="ti ti-clipboard-check text-sm"></i>
+                                                    </a>
+                                                @endcan
+                                            @else
+                                                @can('unreview', $doc)
+                                                    <button type="button"
+                                                        title="Batalkan Review"
+                                                        data-unreview-url="{{ route('admin.documents.unreview', $doc) }}"
+                                                        class="btn-unreview-row ina-button ina-button--sm !px-2 bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200">
+                                                        <i class="ti ti-clipboard-x text-sm"></i>
+                                                    </button>
+                                                    <form class="form-unreview-row hidden" method="POST"
+                                                        action="{{ route('admin.documents.unreview', $doc) }}">
+                                                        @csrf
+                                                    </form>
+                                                @endcan
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -352,6 +386,14 @@ $(document).ready(function () {
         if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif.')) {
             $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
             $(this).closest('td').find('.form-publish-row').submit();
+        }
+    });
+
+    // Unreview confirmation (row-level)
+    $(document).on('click', '.btn-unreview-row', function () {
+        if (confirm('Batalkan review dokumen ini? Data review akan dihapus.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i>');
+            $(this).closest('td').find('.form-unreview-row').submit();
         }
     });
 });

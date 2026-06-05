@@ -62,6 +62,17 @@ class DocumentController extends Controller
                     ->orWhere('number', 'like', "%{$q}%");
             });
         }
+        if ($request->filled('expired')) {
+            if ($request->expired === 'soon') {
+                $query->whereNotNull('expired_at')
+                    ->whereNotNull('reminder_months')
+                    ->whereRaw('expired_at >= CURDATE()')
+                    ->whereRaw('CURDATE() >= DATE_SUB(expired_at, INTERVAL reminder_months MONTH)');
+            } elseif ($request->expired === 'overdue') {
+                $query->whereNotNull('expired_at')
+                    ->whereRaw('expired_at < CURDATE()');
+            }
+        }
 
         $documents     = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
         $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
@@ -252,12 +263,35 @@ class DocumentController extends Controller
         ]);
     }
 
+    public function review(Request $request, Document $document): RedirectResponse
+    {
+        $this->authorize('review', $document);
+        $request->validate(['review_notes' => ['required', 'string', 'max:2000']]);
+
+        $user = auth()->user()->load('role');
+        $this->documentService->review($document, $user, $request->review_notes);
+        $this->activityLog->log($user, 'review_document', $document);
+
+        return back()->with('success', 'Dokumen "' . $document->title . '" berhasil ditandai sebagai direview.');
+    }
+
+    public function unreview(Document $document): RedirectResponse
+    {
+        $this->authorize('unreview', $document);
+
+        $user = auth()->user()->load('role');
+        $this->documentService->unreview($document);
+        $this->activityLog->log($user, 'unreview_document', $document);
+
+        return back()->with('success', 'Review dokumen "' . $document->title . '" berhasil dibatalkan.');
+    }
+
     public function show(Document $document): View
     {
-        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy']);
+        $this->authorize('view', $document);
 
-        // For obsolete modal: only show active docs that don't have a replacement yet
-        // (exclude self and any doc already claimed by another)
+        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy', 'reviewer']);
+
         $activeDocuments = $document->status === 'active'
             ? Document::active()
                 ->whereNull('replaced_by_id')

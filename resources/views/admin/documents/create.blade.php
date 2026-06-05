@@ -145,6 +145,94 @@
                     @error('effective_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Expired At --}}
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="expired_at">Masa Berlaku s/d</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('expired_at') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <input type="date" id="expired_at" name="expired_at"
+                            class="ina-text-field__input"
+                            value="{{ old('expired_at') }}">
+                    </div>
+                    @error('expired_at') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Reminder Months --}}
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="reminder_months">Ingatkan Sebelum Expired (bulan)</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('reminder_months') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <input type="number" id="reminder_months" name="reminder_months"
+                            class="ina-text-field__input"
+                            placeholder="e.g. 3" min="1" max="60"
+                            value="{{ old('reminder_months') }}">
+                    </div>
+                    <p class="text-gray-400 text-xs mt-1">Opsional. Hanya relevan jika masa berlaku diisi.</p>
+                    @error('reminder_months') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Visibility (super_admin only) --}}
+                @if ($user->role->name === 'super_admin')
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="visibility">Visibilitas</label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('visibility') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <select id="visibility" name="visibility" class="ina-text-field__input">
+                            <option value="public" {{ old('visibility', 'public') === 'public' ? 'selected' : '' }}>Publik — semua pengguna dapat mengakses</option>
+                            <option value="restricted" {{ old('visibility') === 'restricted' ? 'selected' : '' }}>Terbatas — hanya Anda yang dapat mengakses</option>
+                        </select>
+                    </div>
+                    @error('visibility') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                @endif
+
+            </div>
+        </div>
+
+        {{-- ── Section: Status Upload ──────────────────────────────────── --}}
+        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Status Dokumen</h2>
+            <p class="text-xs text-gray-400 mb-4">Pilih status awal dokumen yang akan diupload.</p>
+
+            <div class="flex flex-col gap-3">
+                <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors status-option" for="status-active">
+                    <input type="radio" id="status-active" name="target_status" value="active"
+                        {{ old('target_status', 'active') === 'active' ? 'checked' : '' }}>
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">Aktif (melalui Draft)</p>
+                        <p class="text-xs text-gray-500">Dokumen disimpan sebagai Draft, kemudian dipublikasikan secara terpisah.</p>
+                    </div>
+                </label>
+                <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors status-option" for="status-obsolete">
+                    <input type="radio" id="status-obsolete" name="target_status" value="obsolete"
+                        {{ old('target_status') === 'obsolete' ? 'checked' : '' }}>
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">Langsung Obsolete</p>
+                        <p class="text-xs text-gray-500">Dokumen disimpan langsung sebagai Obsolete (untuk digitalisasi arsip lama).</p>
+                    </div>
+                </label>
+            </div>
+
+            <div id="obsolete-fields" class="{{ old('target_status') === 'obsolete' ? '' : 'hidden' }} mt-4 space-y-4 pt-4 border-t border-gray-100">
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="obsolete_reason">
+                        Alasan Obsolete <span class="text-red-500">*</span>
+                    </label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('obsolete_reason') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <textarea id="obsolete_reason" name="obsolete_reason"
+                            class="ina-text-field__input min-h-[80px] resize-y"
+                            placeholder="Tuliskan alasan dokumen ini langsung berstatus obsolete...">{{ old('obsolete_reason') }}</textarea>
+                    </div>
+                    @error('obsolete_reason') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="ina-text-field">
+                    <label class="ina-text-field__label" for="obsolete_date">
+                        Tanggal Obsolete <span class="text-red-500">*</span>
+                    </label>
+                    <div class="ina-text-field__wrapper {{ $errors->has('obsolete_date') ? 'ina-text-field__wrapper--error' : '' }}">
+                        <input type="date" id="obsolete_date" name="obsolete_date"
+                            class="ina-text-field__input"
+                            value="{{ old('obsolete_date', now()->format('Y-m-d')) }}">
+                    </div>
+                    @error('obsolete_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
         </div>
 
@@ -270,6 +358,16 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // Toggle obsolete fields
+    function toggleObsoleteFields() {
+        const isObsolete = $('input[name="target_status"]:checked').val() === 'obsolete';
+        $('#obsolete-fields').toggleClass('hidden', !isObsolete);
+        $('#obsolete_reason').prop('required', isObsolete);
+        $('#obsolete_date').prop('required', isObsolete);
+    }
+    $('input[name="target_status"]').on('change', toggleObsoleteFields);
+    toggleObsoleteFields();
+
     // File input label updater
     function updateFileLabel(inputId, labelId) {
         $('#' + inputId).on('change', function () {

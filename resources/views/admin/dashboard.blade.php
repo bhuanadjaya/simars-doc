@@ -9,36 +9,68 @@
     </div>
 
     {{-- Stat cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <div class="flex items-center justify-between">
-                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Dokumen Aktif</p>
-                <div class="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
-                    <i class="ti ti-file-check text-green-600 text-lg"></i>
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium leading-tight">Dokumen Aktif</p>
+                <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-file-check text-green-600 text-base"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($totalActive) }}</p>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalActive) }}</p>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <div class="flex items-center justify-between">
-                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Baru Bulan Ini</p>
-                <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <i class="ti ti-file-plus text-blue-600 text-lg"></i>
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium leading-tight">Baru Bulan Ini</p>
+                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-file-plus text-blue-600 text-base"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($newThisMonth) }}</p>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($newThisMonth) }}</p>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <div class="flex items-center justify-between">
-                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Dokumen Obsolet</p>
-                <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
-                    <i class="ti ti-file-x text-orange-500 text-lg"></i>
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium leading-tight">Dokumen Obsolet</p>
+                <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-file-x text-orange-500 text-base"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($totalObsolete) }}</p>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalObsolete) }}</p>
         </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-medium leading-tight">Sudah Direview</p>
+                <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-clipboard-check text-purple-600 text-base"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalReviewed) }}</p>
+        </div>
+
+        <a href="{{ route('admin.documents.index', ['expired' => 'soon']) }}"
+            class="bg-white border border-orange-200 rounded-xl p-5 shadow-sm hover:border-orange-400 transition-colors block">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-orange-600 uppercase tracking-wide font-medium leading-tight">Akan Expired</p>
+                <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-clock-exclamation text-orange-500 text-base"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-orange-700">{{ number_format($totalExpiringSoon) }}</p>
+        </a>
+
+        <a href="{{ route('admin.documents.index', ['expired' => 'overdue']) }}"
+            class="bg-white border border-red-200 rounded-xl p-5 shadow-sm hover:border-red-400 transition-colors block">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-red-600 uppercase tracking-wide font-medium leading-tight">Sudah Expired</p>
+                <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="ti ti-clock-x text-red-500 text-base"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-red-700">{{ number_format($totalOverdue) }}</p>
+        </a>
     </div>
 
     {{-- Recent activity --}}
