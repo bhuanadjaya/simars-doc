@@ -43,6 +43,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
         Route::resource('documents', AdminDocumentController::class)->only(['create', 'store', 'edit', 'update'])
             ->middleware('role:super_admin,admin_unit');
 
+        // Harus sebelum index/show agar tidak ditangkap wildcard {document}
+        Route::get('documents/search-parents', [AdminDocumentController::class, 'searchParents'])
+            ->name('documents.search-parents');
+
         Route::resource('documents', AdminDocumentController::class)->only(['index', 'show']);
 
         Route::patch('documents/{document}/publish', [AdminDocumentController::class, 'publish'])

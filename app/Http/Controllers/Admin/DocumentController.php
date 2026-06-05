@@ -11,6 +11,7 @@ use App\Models\DocumentType;
 use App\Models\Unit;
 use App\Services\ActivityLogService;
 use App\Services\DocumentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -83,14 +84,38 @@ class DocumentController extends Controller
         return view('admin.documents.index', compact('user', 'documents', 'documentTypes', 'units', 'counts'));
     }
 
+    public function searchParents(Request $request): JsonResponse
+    {
+        $q       = $request->get('q', '');
+        $exclude = $request->get('exclude');
+
+        $results = Document::active()
+            ->whereNull('replaced_by_id')
+            ->when($exclude, fn ($query) => $query->where('id', '!=', $exclude))
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', "%{$q}%")
+                        ->orWhere('number', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('title')
+            ->limit(40)
+            ->get(['id', 'number', 'title'])
+            ->map(fn ($doc) => [
+                'value' => $doc->id,
+                'text'  => $doc->number . ' — ' . $doc->title,
+            ]);
+
+        return response()->json($results);
+    }
+
     public function create(): View
     {
-        $user             = auth()->user()->load('role', 'unit');
-        $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
-        $units            = Unit::where('is_active', true)->orderBy('name')->get();
-        $availableParents = Document::active()->whereNull('replaced_by_id')->orderBy('title')->get(['id', 'number', 'title']);
+        $user          = auth()->user()->load('role', 'unit');
+        $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
+        $units         = Unit::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.documents.create', compact('user', 'documentTypes', 'units', 'availableParents'));
+        return view('admin.documents.create', compact('user', 'documentTypes', 'units'));
     }
 
     public function store(StoreDocumentRequest $request): RedirectResponse
