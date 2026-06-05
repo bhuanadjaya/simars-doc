@@ -256,10 +256,11 @@
                 {{-- Tags --}}
                 <div class="ina-text-field">
                     <label class="ina-text-field__label" for="tags">Tags</label>
-                    <input type="text" id="tags" name="tags"
-                        class="{{ $errors->has('tags') ? 'tagify-error' : '' }}"
-                        placeholder="Ketik lalu tekan Enter..."
-                        value="{{ old('tags') }}">
+                    <div class="ina-text-field__wrapper tagify-wrapper {{ $errors->has('tags') ? 'ina-text-field__wrapper--status-error' : '' }}">
+                        <input type="text" id="tags" name="tags"
+                            placeholder="Ketik lalu tekan Enter atau koma..."
+                            value="{{ old('tags') }}">
+                    </div>
                     <p class="text-gray-400 text-xs mt-1">Ketik kata kunci lalu tekan Enter atau koma untuk menambahkan tag.</p>
                     @error('tags') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -356,10 +357,18 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 <style>
-.tagify { --tag-bg: #e0f2fe; --tag-text-color: #0369a1; --tag-remove-btn-color: #0369a1; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.35rem 0.5rem; min-height: 2.5rem; width: 100%; background: white; }
-.tagify:focus-within { border-color: #2596be; box-shadow: 0 0 0 3px rgba(37,150,190,.15); }
-.tagify.tagify-error { border-color: #ef4444; }
-.tagify__input { min-width: 80px; }
+/* Tagify reset — border & focus dihandle oleh .ina-text-field__wrapper */
+.tagify-wrapper { height: auto !important; min-height: 40px; padding: 0.25rem 0.375rem; flex-wrap: wrap; align-items: center; gap: 0; }
+.tagify-wrapper .tagify { border: none !important; box-shadow: none !important; background: transparent !important; padding: 0; min-height: 28px; width: 100%; flex: 1; }
+.tagify-wrapper .tagify:focus-within { outline: none; }
+/* Tag chip — mengikuti style IDDS badge */
+.tagify__tag { margin: 2px; }
+.tagify__tag > div { background: #e0f2fe; border-radius: 0.375rem; padding: 2px 6px; color: #0369a1; font-size: 0.75rem; }
+.tagify__tag > div::before { box-shadow: none !important; }
+.tagify__tag__removeBtn { color: #0369a1; }
+.tagify__tag__removeBtn:hover { background: #0369a1; color: white; }
+.tagify__input { min-width: 60px; font-size: 0.875rem; color: var(--ina-content-primary, #1f1f1f); }
+.tagify__input::before { color: var(--ina-content-tertiary, #a3a3a3); }
 </style>
 @endpush
 
