@@ -89,7 +89,7 @@
             </div>
             <div class="text-center border-x border-white/10">
                 <p class="text-3xl font-bold text-white">Multi</p>
-                <p class="text-white/60 text-sm mt-1">Rumah Sakit</p>
+                <p class="text-white/60 text-sm mt-1">Unit</p>
             </div>
             <div class="text-center">
                 <p class="text-3xl font-bold text-white">Aman</p>
@@ -122,8 +122,8 @@
                 <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
                     <i class="ti ti-building-hospital text-green-600 text-2xl"></i>
                 </div>
-                <h3 class="font-semibold text-gray-900 text-lg mb-2">Multi Rumah Sakit</h3>
-                <p class="text-gray-500 text-sm leading-relaxed">Satu platform untuk banyak rumah sakit. Data setiap RS terisolasi dengan aman — tidak ada data yang tercampur.</p>
+                <h3 class="font-semibold text-gray-900 text-lg mb-2">Multi Unit</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">Kelola dokumen lintas unit dalam satu rumah sakit. Setiap unit punya ruang dokumen sendiri, tapi tetap terpusat.</p>
             </div>
 
             {{-- Feature 3 --}}
