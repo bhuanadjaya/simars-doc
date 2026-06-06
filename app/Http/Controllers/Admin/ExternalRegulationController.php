@@ -68,6 +68,7 @@ class ExternalRegulationController extends Controller
             $path    = $pdfFile->store("regulations/{$year}", 'local');
 
             $regulation = ExternalRegulation::create([
+                'hospital_id'       => $user->hospital_id,
                 'regulation_number' => $validated['regulation_number'],
                 'title'             => $validated['title'],
                 'issuing_agency'    => $validated['issuing_agency'],

@@ -67,7 +67,8 @@ class DocumentSeeder extends Seeder
         $statuses = ['draft', 'draft', 'active', 'active', 'active', 'active', 'obsolete'];
         $sources  = ['internal', 'internal', 'internal', 'external'];
 
-        $now = now();
+        $now        = now();
+        $hospitalId = \Database\Seeders\HospitalSeeder::DEFAULT_HOSPITAL_ID;
 
         foreach ($titles as $index => $title) {
             $unit     = $units->random();
@@ -79,6 +80,7 @@ class DocumentSeeder extends Seeder
 
             $docData = [
                 'id'               => $docId,
+                'hospital_id'      => $hospitalId,
                 'number'           => strtoupper($type->code) . '/RS/' . str_pad($index + 1, 3, '0', STR_PAD_LEFT) . '/' . $year,
                 'title'            => $title,
                 'document_type_id' => $type->id,

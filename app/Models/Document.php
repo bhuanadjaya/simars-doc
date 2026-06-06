@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,12 +12,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasUuids, SoftDeletes, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
+        'hospital_id',
         'number', 'title', 'document_type_id', 'owner_unit_id', 'uploaded_by',
         'source', 'revision_number', 'description', 'tags', 'status',
         'effective_date', 'expired_at', 'reminder_months', 'visibility',

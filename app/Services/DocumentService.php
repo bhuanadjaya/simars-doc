@@ -28,6 +28,7 @@ class DocumentService
                 }
 
                 $baseData = array_merge($data, [
+                    'hospital_id'     => $uploader->hospital_id,
                     'uploaded_by'     => $uploader->id,
                     'revision_number' => $revisionNumber,
                     'visibility'      => $data['visibility'] ?? 'public',
@@ -44,7 +45,7 @@ class DocumentService
                 }
 
                 $document = Document::create($baseData);
-                $document->load('ownerUnit');
+                $document->load('hospital', 'ownerUnit');
 
                 // PDF (required)
                 $pdfPath = $this->saveFile($pdfFile, $document);
@@ -206,7 +207,7 @@ class DocumentService
                 }
 
                 $document->update($data);
-                $document->load('ownerUnit');
+                $document->load('hospital', 'ownerUnit');
 
                 if ($pdfFile) {
                     $existing = $document->files()->where('file_type', 'pdf')->first();
@@ -268,9 +269,10 @@ class DocumentService
 
     private function saveFile(UploadedFile $file, Document $document): string
     {
-        $unitCode = $document->ownerUnit->code;
-        $year     = now()->year;
-        $dir      = "documents/{$unitCode}/{$year}/{$document->id}";
+        $hospitalCode = $document->hospital?->code ?? 'default';
+        $unitCode     = $document->ownerUnit->code;
+        $year         = now()->year;
+        $dir          = "documents/{$hospitalCode}/{$unitCode}/{$year}/{$document->id}";
 
         return $file->store($dir, 'local');
     }

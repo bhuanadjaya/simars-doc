@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
 use App\Http\Controllers\Admin\ExternalRegulationController;
@@ -12,13 +14,15 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Portal\DocumentController as PortalDocumentController;
 use Illuminate\Support\Facades\Route;
 
-// Root → redirect to login
-Route::get('/', fn () => redirect('/login'));
+// Landing page (public)
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 // ── Auth ──────────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])

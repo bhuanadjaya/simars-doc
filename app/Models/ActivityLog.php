@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActivityLog extends Model
 {
-    use HasUuids;
+    use HasUuids, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -16,6 +17,7 @@ class ActivityLog extends Model
     const UPDATED_AT = null;
 
     protected $fillable = [
+        'hospital_id',
         'user_id',
         'document_id',
         'action',

@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExternalRegulation extends Model
 {
-    use HasUuids;
+    use HasUuids, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
+        'hospital_id',
         'regulation_number',
         'title',
         'issuing_agency',

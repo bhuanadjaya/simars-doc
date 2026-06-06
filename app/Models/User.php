@@ -17,6 +17,7 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $fillable = [
+        'hospital_id',
         'employee_id',
         'name',
         'nip',
@@ -44,6 +45,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function hospital(): BelongsTo
+    {
+        return $this->belongsTo(Hospital::class);
+    }
+
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
@@ -52,5 +58,10 @@ class User extends Authenticatable
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function isSystemAdmin(): bool
+    {
+        return is_null($this->hospital_id);
     }
 }
