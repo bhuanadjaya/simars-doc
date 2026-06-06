@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\DocumentType;
 use App\Models\Hospital;
 use App\Models\Role;
 use App\Models\Unit;
@@ -56,6 +57,23 @@ class RegisterController extends Controller
                     'name'        => 'Unit Umum',
                     'is_active'   => true,
                 ]);
+
+                // Jenis dokumen default
+                foreach (
+                    [
+                        ['code' => 'SPO',      'name' => 'Standar Prosedur Operasional'],
+                        ['code' => 'SK',       'name' => 'Surat Keputusan'],
+                        ['code' => 'PERDIRUT', 'name' => 'Peraturan Direktur'],
+                        ['code' => 'SIP', 'name' => 'Surat Izin Praktik'],
+                    ] as $type
+                ) {
+                    DocumentType::create([
+                        'hospital_id' => $hospital->id,
+                        'code'        => $type['code'],
+                        'name'        => $type['name'],
+                        'is_active'   => true,
+                    ]);
+                }
 
                 $superAdminRole = Role::where('name', 'super_admin')->firstOrFail();
 
