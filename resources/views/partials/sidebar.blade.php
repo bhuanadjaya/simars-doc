@@ -40,13 +40,13 @@
           <span>Dokumen</span>
         </a>
 
-        @if ($role === 'super_admin')
+        {{-- @if ($role === 'super_admin')
           <a href="{{ route('admin.external-regulations.index') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('admin.external-regulations.*') ? 'bg-[#2596be]/10 text-[#2596be]' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
             <i class="ti ti-gavel text-lg min-w-[20px]"></i>
             <span>Regulasi Eksternal</span>
           </a>
-        @endif
+        @endif --}}
 
         @if ($role === 'super_admin')
           <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2 pt-3">Pengaturan</div>
