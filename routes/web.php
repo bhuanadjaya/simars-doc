@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\System\SystemController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
 use App\Http\Controllers\Admin\ExternalRegulationController;
@@ -121,6 +122,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             Route::get('export-activity-log', [ReportController::class, 'exportActivityLogExcel'])->name('export-activity-log');
             Route::get('usage-statistics', [ReportController::class, 'usageStatistics'])->name('usage-statistics');
         });
+    });
+
+// ── System admin area ─────────────────────────────────────────────────
+Route::prefix('system')->name('system.')->middleware(['auth', 'role:system_admin'])
+    ->group(function () {
+        Route::get('hospitals', [SystemController::class, 'hospitals'])->name('hospitals');
+        Route::get('users', [SystemController::class, 'users'])->name('users');
+        Route::get('activity-log', [SystemController::class, 'activityLog'])->name('activity-log');
     });
 
 // ── User portal ───────────────────────────────────────────────────────
