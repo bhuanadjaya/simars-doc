@@ -298,10 +298,18 @@ class DocumentController extends Controller
     public function review(Request $request, Document $document): RedirectResponse
     {
         $this->authorize('review', $document);
-        $request->validate(['review_notes' => ['required', 'string', 'max:2000']]);
+        $validated = $request->validate([
+            'reviewed_at'  => ['required', 'date'],
+            'review_notes' => ['required', 'string', 'max:2000'],
+        ]);
 
         $user = auth()->user()->load('role');
-        $this->documentService->review($document, $user, $request->review_notes);
+        $this->documentService->review(
+            $document,
+            $user,
+            $validated['review_notes'],
+            \Carbon\Carbon::parse($validated['reviewed_at'])
+        );
         $this->activityLog->log($user, 'review_document', $document);
 
         return back()->with('success', 'Dokumen "' . $document->title . '" berhasil ditandai sebagai direview.');

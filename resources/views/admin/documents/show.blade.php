@@ -414,6 +414,17 @@
                             <p class="font-medium">{{ $document->number }} — {{ $document->title }}</p>
                         </div>
                         <div class="ina-text-field">
+                            <label class="ina-text-field__label" for="reviewed_at">
+                                Tanggal Review <span class="text-red-500">*</span>
+                            </label>
+                            <div class="ina-text-field__wrapper">
+                                <input type="date" id="reviewed_at" name="reviewed_at"
+                                    class="ina-text-field__input"
+                                    value="{{ now()->format('Y-m-d') }}" required>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Kadaluarsa akan otomatis diset 2 tahun setelah tanggal ini.</p>
+                        </div>
+                        <div class="ina-text-field">
                             <label class="ina-text-field__label" for="review_notes">
                                 Catatan Review <span class="text-red-500">*</span>
                             </label>

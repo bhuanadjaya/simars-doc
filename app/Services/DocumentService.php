@@ -171,13 +171,14 @@ class DocumentService
         });
     }
 
-    public function review(Document $document, User $actor, string $notes): void
+    public function review(Document $document, User $actor, string $notes, \Carbon\Carbon $reviewedAt): void
     {
         $document->update([
             'is_reviewed'  => true,
-            'reviewed_at'  => now(),
+            'reviewed_at'  => $reviewedAt,
             'reviewed_by'  => $actor->id,
             'review_notes' => $notes,
+            'expired_at'   => $reviewedAt->copy()->addYears(2),
         ]);
     }
 
