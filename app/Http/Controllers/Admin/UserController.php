@@ -51,7 +51,7 @@ class UserController extends Controller
     public function create(): View
     {
         $units = Unit::where('is_active', true)->orderBy('name')->get();
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'system_admin')->orderBy('name')->get();
 
         return view('admin.users.create', compact('units', 'roles'));
     }
@@ -77,7 +77,7 @@ class UserController extends Controller
     public function edit(User $user): View
     {
         $units = Unit::where('is_active', true)->orderBy('name')->get();
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'system_admin')->orderBy('name')->get();
 
         return view('admin.users.edit', compact('user', 'units', 'roles'));
     }
