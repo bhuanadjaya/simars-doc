@@ -172,11 +172,11 @@
                                 <div class="min-w-0">
                                     <div class="flex items-center flex-wrap gap-2 mb-1">
                                         <span class="text-xs font-mono text-gray-400">{{ $doc->number }}</span>
-                                        <span class="ina-badge ina-badge--info ina-badge--sm">{{ $doc->documentType?->code }}</span>
+                                        <span class="ina-badge ina-badge--soft ina-badge--info ina-badge--sm ina-badge--rounded-full">{{ $doc->documentType?->code }}</span>
                                         @if ($doc->status === 'active')
-                                            <span class="ina-badge ina-badge--positive ina-badge--sm">Aktif</span>
+                                            <span class="ina-badge ina-badge--soft ina-badge--success ina-badge--sm ina-badge--rounded-full">Aktif</span>
                                         @else
-                                            <span class="ina-badge ina-badge--destructive ina-badge--sm">Obsolete</span>
+                                            <span class="ina-badge ina-badge--soft ina-badge--error ina-badge--sm ina-badge--rounded-full">Obsolete</span>
                                         @endif
                                         @if ($isRestricted)
                                             <span class="ina-badge ina-badge--sm" style="background:#fef3c7;color:#92400e;">

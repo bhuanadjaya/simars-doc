@@ -190,11 +190,11 @@
                                 <td class="px-4 py-3">
                                     <div class="flex flex-col gap-1">
                                         @if ($doc->status === 'active')
-                                            <span class="ina-badge ina-badge--positive ina-badge--sm">Aktif</span>
+                                            <span class="ina-badge ina-badge--soft ina-badge--success ina-badge--sm ina-badge--rounded-full">Aktif</span>
                                         @elseif ($doc->status === 'draft')
-                                            <span class="ina-badge ina-badge--warning ina-badge--sm">Draft</span>
+                                            <span class="ina-badge ina-badge--soft ina-badge--warning ina-badge--sm ina-badge--rounded-full">Draft</span>
                                         @else
-                                            <span class="ina-badge ina-badge--destructive ina-badge--sm">Obsolet</span>
+                                            <span class="ina-badge ina-badge--soft ina-badge--error ina-badge--sm ina-badge--rounded-full">Obsolet</span>
                                         @endif
                                         @if ($doc->is_reviewed)
                                             <span class="ina-badge ina-badge--sm" style="background:#ede9fe;color:#7c3aed;">Reviewed</span>
