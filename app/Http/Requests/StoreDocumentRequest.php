@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoEmbeddedScripts;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,8 +33,8 @@ class StoreDocumentRequest extends FormRequest
             'target_status'      => ['nullable', 'in:active,obsolete'],
             'obsolete_reason'    => [$isObsolete ? 'required' : 'nullable', 'string', 'max:1000'],
             'obsolete_date'      => [$isObsolete ? 'required' : 'nullable', 'date'],
-            'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480'],
-            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480'],
+            'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
+            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];
     }
 

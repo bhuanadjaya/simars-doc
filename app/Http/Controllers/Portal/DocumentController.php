@@ -153,9 +153,16 @@ class DocumentController extends Controller
 
         $contents = \Illuminate\Support\Facades\Storage::disk('local')->get($pdfFile->file_path);
 
+        $disposition = \Symfony\Component\HttpFoundation\HeaderUtils::makeDisposition(
+            \Symfony\Component\HttpFoundation\HeaderUtils::DISPOSITION_INLINE,
+            $pdfFile->original_filename,
+            'document.pdf'
+        );
+
         return response($contents, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $pdfFile->original_filename . '"',
+            'Content-Type'           => 'application/pdf',
+            'Content-Disposition'    => $disposition,
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

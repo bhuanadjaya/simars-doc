@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoEmbeddedScripts;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,8 +27,8 @@ class UpdateDocumentRequest extends FormRequest
             'description'        => ['nullable', 'string'],
             'tags'               => ['nullable', 'string', 'max:255'],
             'parent_document_id' => ['nullable', 'string', Rule::exists('documents', 'id')->where(fn ($q) => $q->where('status', 'active')->whereNull('replaced_by_id'))],
-            'pdf_file'           => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
-            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480'],
+            'pdf_file'           => ['nullable', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
+            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];
     }
 
