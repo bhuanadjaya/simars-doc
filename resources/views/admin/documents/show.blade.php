@@ -56,6 +56,17 @@
             @endif
 
             @if ($document->status === 'active')
+                @can('revertToDraft', $document)
+                    <button type="button" id="btn-revert"
+                        class="ina-button ina-button--sm flex items-center gap-1.5 bg-yellow-50 text-yellow-700 border border-yellow-300 hover:bg-yellow-100">
+                        <i class="ti ti-arrow-back-up text-sm"></i> Kembalikan ke Draft
+                    </button>
+                    <form id="form-revert" method="POST"
+                        action="{{ route('admin.documents.revert-to-draft', $document) }}" class="hidden">
+                        @csrf @method('PATCH')
+                    </form>
+                @endcan
+
                 @can('obsolete', $document)
                     <button type="button" id="btn-obsolete"
                         class="ina-button ina-button--sm flex items-center gap-1.5 bg-orange-50 text-orange-700 border border-orange-300 hover:bg-orange-100">
@@ -476,6 +487,14 @@ $(document).ready(function () {
         if (confirm('Publikasikan dokumen ini? Status akan berubah menjadi Aktif dan tidak dapat dikembalikan ke Draft.')) {
             $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> Memproses...');
             $('#form-publish').submit();
+        }
+    });
+
+    // Revert to draft confirm
+    $('#btn-revert').on('click', function () {
+        if (confirm('Kembalikan dokumen ini ke Draft? Status aktif akan dicabut dan dokumen tidak dapat diakses portal hingga dipublikasikan kembali.')) {
+            $(this).prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> Memproses...');
+            $('#form-revert').submit();
         }
     });
 

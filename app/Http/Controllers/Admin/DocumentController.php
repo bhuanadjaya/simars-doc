@@ -326,6 +326,21 @@ class DocumentController extends Controller
         return back()->with('success', 'Review dokumen "' . $document->title . '" berhasil dibatalkan.');
     }
 
+    public function revertToDraft(Document $document): RedirectResponse
+    {
+        $this->authorize('revertToDraft', $document);
+
+        $document->update([
+            'status'      => 'draft',
+            'published_at' => null,
+        ]);
+
+        $user = auth()->user()->load('role');
+        $this->activityLog->log($user, 'revert_to_draft', $document);
+
+        return back()->with('success', 'Dokumen "' . $document->title . '" dikembalikan ke Draft.');
+    }
+
     public function show(Document $document): View
     {
         $this->authorize('view', $document);

@@ -67,6 +67,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             ->name('documents.obsolete')
             ->middleware('role:super_admin,admin_unit');
 
+        Route::patch('documents/{document}/revert-to-draft', [AdminDocumentController::class, 'revertToDraft'])
+            ->name('documents.revert-to-draft')
+            ->middleware('role:super_admin');
+
         Route::post('documents/{document}/review', [AdminDocumentController::class, 'review'])
             ->name('documents.review')
             ->middleware('role:super_admin,admin_unit');

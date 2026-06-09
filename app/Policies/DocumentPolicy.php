@@ -45,6 +45,11 @@ class DocumentPolicy
         return $this->ownsDocument($user, $document);
     }
 
+    public function revertToDraft(User $user, Document $document): bool
+    {
+        return $user->role->name === 'super_admin' && $document->status === 'active';
+    }
+
     private function ownsDocument(User $user, Document $document): bool
     {
         if ($user->role->name === 'super_admin') {
