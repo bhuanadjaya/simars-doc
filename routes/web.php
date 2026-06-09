@@ -138,6 +138,9 @@ Route::prefix('system')->name('system.')->middleware(['auth', 'role:system_admin
     ->group(function () {
         Route::get('hospitals', [SystemController::class, 'hospitals'])->name('hospitals');
         Route::get('users', [SystemController::class, 'users'])->name('users');
+        Route::get('users/{user}/edit', [SystemController::class, 'editUser'])->name('users.edit');
+        Route::put('users/{user}', [SystemController::class, 'updateUser'])->name('users.update');
+        Route::get('hospitals/{hospital}/units', [SystemController::class, 'unitsByHospital'])->name('hospitals.units');
         Route::get('activity-log', [SystemController::class, 'activityLog'])->name('activity-log');
     });
 

@@ -5,7 +5,11 @@ namespace App\Http\Controllers\System;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Hospital;
+use App\Models\Role;
+use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -54,6 +58,40 @@ class SystemController extends Controller
         $hospitals = Hospital::orderBy('name')->get(['id', 'name', 'code']);
 
         return view('system.users', compact('users', 'hospitals'));
+    }
+
+    public function editUser(User $user): View
+    {
+        $hospitals = Hospital::orderBy('name')->get(['id', 'name', 'code']);
+        $units     = $user->hospital_id
+            ? Unit::where('hospital_id', $user->hospital_id)->orderBy('name')->get(['id', 'name', 'code'])
+            : collect();
+        $roles     = Role::where('name', '!=', 'system_admin')->orderBy('name')->get();
+
+        return view('system.edit-user', compact('user', 'hospitals', 'units', 'roles'));
+    }
+
+    public function updateUser(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'hospital_id' => ['nullable', 'exists:hospitals,id'],
+            'unit_id'     => ['nullable', 'exists:units,id'],
+            'role_id'     => ['required', 'exists:roles,id'],
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->route('system.users')
+            ->with('success', 'User "' . $user->name . '" berhasil diperbarui.');
+    }
+
+    public function unitsByHospital(Hospital $hospital): JsonResponse
+    {
+        $units = Unit::where('hospital_id', $hospital->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json($units);
     }
 
     public function activityLog(Request $request): View

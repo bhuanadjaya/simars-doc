@@ -70,6 +70,7 @@
                     <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
                     <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                     <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Bergabung</th>
+                    <th class="px-4 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -102,6 +103,12 @@
                         </td>
                         <td class="px-4 py-3.5 text-center text-xs text-gray-400">
                             {{ $user->created_at->format('d M Y') }}
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <a href="{{ route('system.users.edit', $user) }}"
+                                class="ina-button ina-button--secondary ina-button--sm">
+                                <i class="ti ti-pencil text-sm"></i>
+                            </a>
                         </td>
                     </tr>
                 @endforeach

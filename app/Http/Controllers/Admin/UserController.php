@@ -64,6 +64,7 @@ class UserController extends Controller
         $validated = $request->validated();
 
         User::create([
+            'hospital_id' => auth()->user()->hospital_id,
             'name'        => $validated['name'],
             'employee_id' => $validated['employee_id'] ?? null,
             'email'       => $validated['email'],
