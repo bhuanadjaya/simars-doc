@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUnitRequest extends FormRequest
 {
@@ -14,7 +15,10 @@ class StoreUnitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code'      => ['required', 'string', 'max:20', 'unique:units,code'],
+            'code'      => [
+                'required', 'string', 'max:20',
+                Rule::unique('units', 'code')->where('hospital_id', auth()->user()->hospital_id),
+            ],
             'name'      => ['required', 'string', 'max:150'],
             'parent_id' => ['nullable', 'string', 'exists:units,id'],
         ];
