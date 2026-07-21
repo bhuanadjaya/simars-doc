@@ -19,7 +19,7 @@ class UpdateDocumentRequest extends FormRequest
             'number'             => ['required', 'string', 'max:100'],
             'title'              => ['required', 'string', 'max:255'],
             'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
-            'source'             => ['required', 'in:internal,external'],
+            'source'             => ['nullable', 'in:internal,external'],
             'effective_date'     => ['nullable', 'date'],
             'expired_at'         => ['nullable', 'date'],
             'reminder_months'    => ['nullable', 'integer', 'min:1', 'max:60'],

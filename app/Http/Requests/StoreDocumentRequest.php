@@ -22,7 +22,7 @@ class StoreDocumentRequest extends FormRequest
             'title'              => ['required', 'string', 'max:255'],
             'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
             'owner_unit_id'      => ['required', 'string', 'exists:units,id'],
-            'source'             => ['required', 'in:internal,external'],
+            'source'             => ['nullable', 'in:internal,external'],
             'effective_date'     => ['nullable', 'date'],
             'expired_at'         => ['nullable', 'date'],
             'reminder_months'    => ['nullable', 'integer', 'min:1', 'max:60'],

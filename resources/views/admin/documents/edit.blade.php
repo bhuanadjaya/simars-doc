@@ -104,17 +104,8 @@
                     <p class="text-gray-400 text-xs mt-1">Unit pemilik tidak dapat diubah setelah dokumen dibuat.</p>
                 </div>
 
-                {{-- Source --}}
-                <div class="ina-text-field">
-                    <label class="ina-text-field__label" for="source">
-                        Sumber <span class="text-red-500">*</span>
-                    </label>
-                    <select id="source" name="source" class="ts-select ts-no-search {{ $errors->has('source') ? 'ts-error' : '' }}" required>
-                        <option value="internal" {{ old('source', $document->source) == 'internal' ? 'selected' : '' }}>Internal</option>
-                        <option value="external" {{ old('source', $document->source) == 'external' ? 'selected' : '' }}>Eksternal</option>
-                    </select>
-                    @error('source') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                {{-- Source: default internal, hidden --}}
+                <input type="hidden" name="source" value="{{ old('source', $document->source ?? 'internal') }}">
 
                 {{-- Effective Date --}}
                 <div class="ina-text-field">
