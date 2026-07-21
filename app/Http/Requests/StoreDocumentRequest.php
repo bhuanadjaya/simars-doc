@@ -33,6 +33,8 @@ class StoreDocumentRequest extends FormRequest
             'target_status'      => ['nullable', 'in:active,obsolete'],
             'obsolete_reason'    => [$isObsolete ? 'required' : 'nullable', 'string', 'max:1000'],
             'obsolete_date'      => [$isObsolete ? 'required' : 'nullable', 'date'],
+            'extra_numbers'      => ['nullable', 'array'],
+            'extra_numbers.*'    => ['nullable', 'string', 'max:100'],
             'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
             'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];

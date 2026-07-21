@@ -117,4 +117,9 @@ class Document extends Model
     {
         return $this->hasOne(Document::class, 'replaced_by_id');
     }
+
+    public function documentNumbers(): HasMany
+    {
+        return $this->hasMany(DocumentNumber::class)->orderBy('sort_order');
+    }
 }

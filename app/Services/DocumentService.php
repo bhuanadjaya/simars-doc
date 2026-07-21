@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendDocumentNotifications;
 use App\Models\Document;
 use App\Models\DocumentFile;
+use App\Models\DocumentNumber;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ class DocumentService
     {
         $uploadedPaths = [];
         $targetStatus  = $data['target_status'] ?? 'active';
-        unset($data['target_status']);
+        $extraNumbers  = array_filter($data['extra_numbers'] ?? []);
+        unset($data['target_status'], $data['extra_numbers']);
 
         try {
             return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths, $targetStatus) {
@@ -46,6 +48,14 @@ class DocumentService
 
                 $document = Document::create($baseData);
                 $document->load('hospital', 'ownerUnit');
+
+                foreach (array_values($extraNumbers) as $i => $num) {
+                    DocumentNumber::create([
+                        'document_id' => $document->id,
+                        'number'      => $num,
+                        'sort_order'  => $i + 1,
+                    ]);
+                }
 
                 // PDF (required)
                 $pdfPath = $this->saveFile($pdfFile, $document);
@@ -194,11 +204,13 @@ class DocumentService
 
     public function update(Document $document, array $data, ?UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document
     {
-        $newPaths = [];
-        $oldPaths = [];
+        $newPaths     = [];
+        $oldPaths     = [];
+        $extraNumbers = array_filter($data['extra_numbers'] ?? []);
+        unset($data['extra_numbers']);
 
         try {
-            $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths) {
+            $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths, $extraNumbers) {
                 $newParentId = $data['parent_document_id'] ?? null;
                 if ($newParentId !== $document->parent_document_id) {
                     $parent = $newParentId
@@ -208,6 +220,15 @@ class DocumentService
                 }
 
                 $document->update($data);
+
+                $document->documentNumbers()->delete();
+                foreach (array_values($extraNumbers) as $i => $num) {
+                    DocumentNumber::create([
+                        'document_id' => $document->id,
+                        'number'      => $num,
+                        'sort_order'  => $i + 1,
+                    ]);
+                }
                 $document->load('hospital', 'ownerUnit');
 
                 if ($pdfFile) {

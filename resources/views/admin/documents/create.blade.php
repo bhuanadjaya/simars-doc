@@ -61,6 +61,36 @@
                     @error('number') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Extra Numbers (kerjasama) --}}
+                <div class="md:col-span-2">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-medium text-gray-700">
+                            Nomor Tambahan
+                            <span class="text-xs text-gray-400 font-normal ml-1">(untuk dokumen dengan lebih dari satu nomor)</span>
+                        </label>
+                        <button type="button" id="btn-add-number" class="ina-button ina-button--secondary ina-button--sm">
+                            <i class="ti ti-plus text-sm"></i> Tambah Nomor
+                        </button>
+                    </div>
+                    <div id="extra-numbers-list" class="space-y-2">
+                        @foreach (old('extra_numbers', []) as $num)
+                            @if ($num)
+                            <div class="flex gap-2 extra-number-row">
+                                <div class="ina-text-field flex-1">
+                                    <div class="ina-text-field__wrapper">
+                                        <input type="text" name="extra_numbers[]" class="ina-text-field__input"
+                                            value="{{ $num }}" placeholder="e.g. 002/PKS/2025">
+                                    </div>
+                                </div>
+                                <button type="button" class="ina-button ina-button--secondary ina-button--md remove-extra-number" style="color:#ef4444">
+                                    <i class="ti ti-trash text-sm"></i>
+                                </button>
+                            </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+
                 {{-- Title --}}
                 <div class="ina-text-field">
                     <label class="ina-text-field__label" for="title">
@@ -440,6 +470,27 @@ $(document).ready(function () {
 
     $('form').on('submit', function () {
         $('#submit-btn').prop('disabled', true).html('<i class="ti ti-loader-2 animate-spin"></i> <span>Mengupload...</span>');
+    });
+
+    // Extra numbers
+    const extraNumberRowHtml = () => `<div class="flex gap-2 extra-number-row">
+        <div class="ina-text-field flex-1">
+            <div class="ina-text-field__wrapper">
+                <input type="text" name="extra_numbers[]" class="ina-text-field__input" placeholder="e.g. 002/PKS/2025">
+            </div>
+        </div>
+        <button type="button" class="ina-button ina-button--secondary ina-button--md remove-extra-number" style="color:#ef4444">
+            <i class="ti ti-trash text-sm"></i>
+        </button>
+    </div>`;
+
+    $('#btn-add-number').on('click', function () {
+        $('#extra-numbers-list').append(extraNumberRowHtml());
+        $('#extra-numbers-list .extra-number-row:last input').focus();
+    });
+
+    $(document).on('click', '.remove-extra-number', function () {
+        $(this).closest('.extra-number-row').remove();
     });
 });
 </script>

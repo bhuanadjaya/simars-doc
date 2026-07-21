@@ -121,7 +121,12 @@
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
             <div>
                 <dt class="text-gray-400 text-xs uppercase tracking-wide">Nomor Dokumen</dt>
-                <dd class="font-medium text-gray-900 mt-0.5">{{ $document->number }}</dd>
+                <dd class="font-medium text-gray-900 mt-0.5">
+                    {{ $document->number }}
+                    @foreach ($document->documentNumbers as $dn)
+                        <span class="block text-gray-600 text-sm">{{ $dn->number }}</span>
+                    @endforeach
+                </dd>
             </div>
             <div>
                 <dt class="text-gray-400 text-xs uppercase tracking-wide">Jenis Dokumen</dt>

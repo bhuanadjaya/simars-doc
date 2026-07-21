@@ -60,7 +60,8 @@ class DocumentController extends Controller
             $q = $request->q;
             $query->where(function ($sub) use ($q) {
                 $sub->where('title', 'like', "%{$q}%")
-                    ->orWhere('number', 'like', "%{$q}%");
+                    ->orWhere('number', 'like', "%{$q}%")
+                    ->orWhereHas('documentNumbers', fn ($dn) => $dn->where('number', 'like', "%{$q}%"));
             });
         }
         if ($request->filled('expired')) {
@@ -154,7 +155,7 @@ class DocumentController extends Controller
 
         $this->authorize('update', $document);
 
-        $document->load(['documentType', 'ownerUnit', 'files', 'parentDocument']);
+        $document->load(['documentType', 'ownerUnit', 'files', 'parentDocument', 'documentNumbers']);
         $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
         $availableParents = Document::active()
             ->whereNull('replaced_by_id')
@@ -345,7 +346,7 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
-        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy', 'reviewer']);
+        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy', 'reviewer', 'documentNumbers']);
 
         $activeDocuments = $document->status === 'active'
             ? Document::active()

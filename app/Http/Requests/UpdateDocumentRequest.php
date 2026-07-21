@@ -27,6 +27,8 @@ class UpdateDocumentRequest extends FormRequest
             'description'        => ['nullable', 'string'],
             'tags'               => ['nullable', 'string', 'max:255'],
             'parent_document_id' => ['nullable', 'string', Rule::exists('documents', 'id')->where(fn ($q) => $q->where('status', 'active')->whereNull('replaced_by_id'))],
+            'extra_numbers'      => ['nullable', 'array'],
+            'extra_numbers.*'    => ['nullable', 'string', 'max:100'],
             'pdf_file'           => ['nullable', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
             'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];
