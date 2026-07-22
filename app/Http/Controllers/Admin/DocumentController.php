@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ArrayExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ObsoleteDocumentRequest;
 use App\Http\Requests\StoreDocumentRequest;
@@ -16,6 +17,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 use Throwable;
@@ -108,6 +111,77 @@ class DocumentController extends Controller
             ]);
 
         return response()->json($results);
+    }
+
+    public function exportExcel(Request $request): BinaryFileResponse
+    {
+        $user = auth()->user()->load('role', 'unit');
+
+        $query = Document::with(['documentType', 'ownerUnit', 'uploader', 'documentNumbers'])
+            ->withoutGlobalScope('visibility');
+
+        if ($user->role->name === 'admin_unit') {
+            $query->where('owner_unit_id', $user->unit_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('type')) {
+            $query->where('document_type_id', $request->type);
+        }
+        if ($request->filled('unit') && $user->role->name !== 'admin_unit') {
+            $query->where('owner_unit_id', $request->unit);
+        }
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('title', 'like', "%{$q}%")
+                    ->orWhere('number', 'like', "%{$q}%")
+                    ->orWhereHas('documentNumbers', fn ($dn) => $dn->where('number', 'like', "%{$q}%"));
+            });
+        }
+
+        $documents = $query->orderBy('status')->orderBy('number')->get();
+
+        $headers = [
+            'No', 'Nomor Dokumen', 'Nomor Tambahan', 'Judul', 'Jenis Dokumen', 'Unit Pemilik',
+            'Status', 'Sumber', 'Nomor Revisi', 'Tanggal Berlaku', 'Tanggal Publikasi',
+            'Masa Berlaku s/d', 'Sudah Direview', 'Tanggal Review', 'Catatan Review',
+            'Tanggal Obsolet', 'Alasan Obsolet', 'Diunggah Oleh', 'Deskripsi', 'Tags',
+        ];
+
+        $rows = [$headers];
+
+        foreach ($documents as $i => $doc) {
+            $extraNumbers = $doc->documentNumbers->pluck('number')->implode(', ');
+            $rows[]       = [
+                $i + 1,
+                $doc->number,
+                $extraNumbers,
+                $doc->title,
+                $doc->documentType?->name ?? '',
+                $doc->ownerUnit?->name ?? '',
+                ucfirst($doc->status),
+                $doc->source === 'internal' ? 'Internal' : 'Eksternal',
+                $doc->revision_number == 0 ? 'Original' : 'Rev. ' . str_pad($doc->revision_number, 2, '0', STR_PAD_LEFT),
+                $doc->effective_date?->format('d/m/Y') ?? '',
+                $doc->published_at?->format('d/m/Y') ?? '',
+                $doc->expired_at?->format('d/m/Y') ?? '',
+                $doc->is_reviewed ? 'Ya' : 'Tidak',
+                $doc->reviewed_at?->format('d/m/Y') ?? '',
+                $doc->review_notes ?? '',
+                $doc->obsolete_date?->format('d/m/Y') ?? '',
+                $doc->obsolete_reason ?? '',
+                $doc->uploader?->name ?? '',
+                $doc->description ?? '',
+                $doc->tags ?? '',
+            ];
+        }
+
+        $filename = 'dokumen-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new ArrayExport($rows, $headers), $filename);
     }
 
     public function create(): View

@@ -57,6 +57,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
         Route::get('documents/search-parents', [AdminDocumentController::class, 'searchParents'])
             ->name('documents.search-parents');
 
+        Route::get('documents/export-excel', [AdminDocumentController::class, 'exportExcel'])
+            ->name('documents.export-excel');
+
         Route::resource('documents', AdminDocumentController::class)->only(['index', 'show']);
 
         Route::patch('documents/{document}/publish', [AdminDocumentController::class, 'publish'])
@@ -148,8 +151,8 @@ Route::prefix('system')->name('system.')->middleware(['auth', 'role:system_admin
 Route::prefix('portal')->name('portal.')->middleware(['auth'])
     ->group(function () {
         Route::get('documents', [PortalDocumentController::class, 'index'])->name('documents.index');
+        Route::get('documents/export-excel', [PortalDocumentController::class, 'exportExcel'])->name('documents.export-excel');
         Route::get('documents/{document}', [PortalDocumentController::class, 'show'])->name('documents.show');
         Route::get('documents/{document}/download', [PortalDocumentController::class, 'download'])->name('documents.download');
         Route::get('documents/{document}/stream', [PortalDocumentController::class, 'stream'])->name('documents.stream');
-        Route::get('documents/export-excel', [PortalDocumentController::class, 'exportExcel'])->name('documents.export-excel');
     });

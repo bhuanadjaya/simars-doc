@@ -109,13 +109,18 @@
             </div>
         @endif
 
-        <button type="submit" class="ina-button ina-button--secondary ina-button--sm">
+        <button type="submit" class="ina-button ina-button--secondary ina-button--md flex items-center gap-1.5">
             <i class="ti ti-filter text-sm"></i> Filter
         </button>
 
+        <a href="{{ route('admin.documents.export-excel', request()->query()) }}"
+            class="ina-button ina-button--secondary ina-button--md flex items-center gap-1.5">
+            <i class="ti ti-table-export text-sm"></i> Export Excel
+        </a>
+
         @if (request()->hasAny(['q', 'type', 'unit']))
             <a href="{{ route('admin.documents.index', request()->only('status')) }}"
-                class="ina-button ina-button--secondary ina-button--sm text-red-500 hover:text-red-700">
+                class="ina-button ina-button--secondary ina-button--md flex items-center gap-1.5 text-red-500 hover:text-red-700">
                 <i class="ti ti-x text-sm"></i> Reset
             </a>
         @endif

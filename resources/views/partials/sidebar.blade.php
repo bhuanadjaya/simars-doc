@@ -96,11 +96,7 @@
         @if (in_array($role, ['super_admin', 'auditor']))
           <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2 pt-3">Laporan</div>
 
-          <a href="{{ route('admin.reports.master-document-list') }}"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('admin.reports.master-document-list') ? 'bg-[#2596be]/10 text-[#2596be]' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-            <i class="ti ti-report text-lg min-w-[20px]"></i>
-            <span>Daftar Induk Dokumen</span>
-          </a>
+          {{-- Daftar Induk Dokumen disembunyikan (fungsi sama dengan Portal Dokumen) --}}
 
           <a href="{{ route('admin.reports.activity-log') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('admin.reports.activity-log') ? 'bg-[#2596be]/10 text-[#2596be]' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
