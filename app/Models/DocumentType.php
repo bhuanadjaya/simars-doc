@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DocumentType extends Model
@@ -24,5 +25,10 @@ class DocumentType extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function allowedUnits(): BelongsToMany
+    {
+        return $this->belongsToMany(Unit::class, 'document_type_units');
     }
 }

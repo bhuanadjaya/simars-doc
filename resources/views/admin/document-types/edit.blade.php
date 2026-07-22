@@ -63,6 +63,31 @@
                     </div>
                     @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
+
+                {{-- Unit Restrictions --}}
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-sm font-medium text-gray-700">Batasan Unit Upload</label>
+                        <span class="text-xs text-gray-400">Kosongkan = semua unit boleh upload</span>
+                    </div>
+                    @if ($units->isEmpty())
+                        <p class="text-xs text-gray-400 italic">Belum ada unit aktif.</p>
+                    @else
+                        <div class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
+                            @foreach ($units as $unit)
+                            <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="allowed_units[]" value="{{ $unit->id }}"
+                                    class="rounded border-gray-300"
+                                    {{ in_array($unit->id, old('allowed_units', $selectedUnitIds)) ? 'checked' : '' }}>
+                                <span class="text-sm text-gray-700">
+                                    <span class="font-mono text-xs text-gray-400 mr-1">{{ $unit->code }}</span>{{ $unit->name }}
+                                </span>
+                            </label>
+                            @endforeach
+                        </div>
+                    @endif
+                    @error('allowed_units') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             <div class="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-gray-100">

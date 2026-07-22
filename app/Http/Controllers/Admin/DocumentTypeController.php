@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DocumentType;
+use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,17 +35,23 @@ class DocumentTypeController extends Controller
 
     public function create(): View
     {
-        return view('admin.document-types.create');
+        $units = Unit::where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
+        return view('admin.document-types.create', compact('units'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $hospitalId = auth()->user()->hospital_id;
+
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:20', 'unique:document_types,code'],
-            'name' => ['required', 'string', 'max:100'],
+            'code'            => ['required', 'string', 'max:20', Rule::unique('document_types', 'code')->where('hospital_id', $hospitalId)],
+            'name'            => ['required', 'string', 'max:100'],
+            'allowed_units'   => ['nullable', 'array'],
+            'allowed_units.*' => ['exists:units,id'],
         ]);
 
-        DocumentType::create(array_merge($validated, ['is_active' => true]));
+        $docType = DocumentType::create(['code' => $validated['code'], 'name' => $validated['name'], 'is_active' => true]);
+        $docType->allowedUnits()->sync($validated['allowed_units'] ?? []);
 
         return redirect()->route('admin.document-types.index')
             ->with('success', 'Jenis dokumen "' . $validated['name'] . '" berhasil ditambahkan.');
@@ -52,17 +59,26 @@ class DocumentTypeController extends Controller
 
     public function edit(DocumentType $documentType): View
     {
-        return view('admin.document-types.edit', compact('documentType'));
+        $documentType->load('allowedUnits');
+        $units           = Unit::where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
+        $selectedUnitIds = $documentType->allowedUnits->pluck('id')->toArray();
+
+        return view('admin.document-types.edit', compact('documentType', 'units', 'selectedUnitIds'));
     }
 
     public function update(Request $request, DocumentType $documentType): RedirectResponse
     {
+        $hospitalId = auth()->user()->hospital_id;
+
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:20', Rule::unique('document_types', 'code')->ignore($documentType->id)],
-            'name' => ['required', 'string', 'max:100'],
+            'code'            => ['required', 'string', 'max:20', Rule::unique('document_types', 'code')->ignore($documentType->id)->where('hospital_id', $hospitalId)],
+            'name'            => ['required', 'string', 'max:100'],
+            'allowed_units'   => ['nullable', 'array'],
+            'allowed_units.*' => ['exists:units,id'],
         ]);
 
-        $documentType->update($validated);
+        $documentType->update(['code' => $validated['code'], 'name' => $validated['name']]);
+        $documentType->allowedUnits()->sync($validated['allowed_units'] ?? []);
 
         return redirect()->route('admin.document-types.index')
             ->with('success', 'Jenis dokumen "' . $documentType->name . '" berhasil diperbarui.');

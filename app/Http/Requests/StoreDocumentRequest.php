@@ -20,7 +20,17 @@ class StoreDocumentRequest extends FormRequest
         return [
             'number'             => ['required', 'string', 'max:100'],
             'title'              => ['required', 'string', 'max:255'],
-            'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
+            'document_type_id'   => ['required', 'string', 'exists:document_types,id', function ($attribute, $value, $fail) {
+                $user = auth()->user();
+                if ($user->role->name === 'super_admin') return;
+
+                $docType = \App\Models\DocumentType::find($value);
+                if (!$docType || !$docType->allowedUnits()->exists()) return;
+
+                if (!$docType->allowedUnits()->where('units.id', $user->unit_id)->exists()) {
+                    $fail('Unit Anda tidak diizinkan mengupload jenis dokumen ini.');
+                }
+            }],
             'owner_unit_id'      => ['required', 'string', 'exists:units,id'],
             'source'             => ['nullable', 'in:internal,external'],
             'effective_date'     => ['nullable', 'date'],

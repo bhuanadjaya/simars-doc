@@ -112,9 +112,19 @@ class DocumentController extends Controller
 
     public function create(): View
     {
-        $user          = auth()->user()->load('role', 'unit');
-        $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
-        $units         = Unit::where('is_active', true)->orderBy('name')->get();
+        $user = auth()->user()->load('role', 'unit');
+
+        $documentTypes = DocumentType::where('is_active', true)
+            ->when($user->role->name === 'admin_unit', function ($q) use ($user) {
+                $q->where(function ($sub) use ($user) {
+                    $sub->whereDoesntHave('allowedUnits')
+                        ->orWhereHas('allowedUnits', fn ($u) => $u->where('units.id', $user->unit_id));
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        $units = Unit::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.documents.create', compact('user', 'documentTypes', 'units'));
     }
