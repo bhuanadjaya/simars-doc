@@ -22,7 +22,7 @@ class DocumentService
         unset($data['target_status'], $data['extra_numbers']);
 
         try {
-            return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths, $targetStatus) {
+            return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths, $targetStatus, $extraNumbers) {
                 $revisionNumber = 0;
                 if (! empty($data['parent_document_id'])) {
                     $parent = Document::withoutGlobalScope('visibility')->find($data['parent_document_id']);

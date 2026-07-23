@@ -64,7 +64,7 @@ class DocumentController extends Controller
             $query->where(function ($sub) use ($q) {
                 $sub->where('title', 'like', "%{$q}%")
                     ->orWhere('number', 'like', "%{$q}%")
-                    ->orWhereHas('documentNumbers', fn ($dn) => $dn->where('number', 'like', "%{$q}%"));
+                    ->orWhereHas('documentNumbers', fn($dn) => $dn->where('number', 'like', "%{$q}%"));
             });
         }
         if ($request->filled('expired')) {
@@ -95,7 +95,7 @@ class DocumentController extends Controller
 
         $results = Document::active()
             ->whereNull('replaced_by_id')
-            ->when($exclude, fn ($query) => $query->where('id', '!=', $exclude))
+            ->when($exclude, fn($query) => $query->where('id', '!=', $exclude))
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', "%{$q}%")
@@ -105,7 +105,7 @@ class DocumentController extends Controller
             ->orderBy('title')
             ->limit(40)
             ->get(['id', 'number', 'title'])
-            ->map(fn ($doc) => [
+            ->map(fn($doc) => [
                 'value' => $doc->id,
                 'text'  => $doc->number . ' — ' . $doc->title,
             ]);
@@ -138,17 +138,33 @@ class DocumentController extends Controller
             $query->where(function ($sub) use ($q) {
                 $sub->where('title', 'like', "%{$q}%")
                     ->orWhere('number', 'like', "%{$q}%")
-                    ->orWhereHas('documentNumbers', fn ($dn) => $dn->where('number', 'like', "%{$q}%"));
+                    ->orWhereHas('documentNumbers', fn($dn) => $dn->where('number', 'like', "%{$q}%"));
             });
         }
 
         $documents = $query->orderBy('status')->orderBy('number')->get();
 
         $headers = [
-            'No', 'Nomor Dokumen', 'Nomor Tambahan', 'Judul', 'Jenis Dokumen', 'Unit Pemilik',
-            'Status', 'Sumber', 'Nomor Revisi', 'Tanggal Berlaku', 'Tanggal Publikasi',
-            'Masa Berlaku s/d', 'Sudah Direview', 'Tanggal Review', 'Catatan Review',
-            'Tanggal Obsolet', 'Alasan Obsolet', 'Diunggah Oleh', 'Deskripsi', 'Tags',
+            'No',
+            'Nomor Dokumen',
+            'Nomor Tambahan',
+            'Judul',
+            'Jenis Dokumen',
+            'Unit Pemilik',
+            'Status',
+            'Sumber',
+            'Nomor Revisi',
+            'Tanggal Berlaku',
+            'Tanggal Publikasi',
+            'Masa Berlaku s/d',
+            'Sudah Direview',
+            'Tanggal Review',
+            'Catatan Review',
+            'Tanggal Obsolet',
+            'Alasan Obsolet',
+            'Diunggah Oleh',
+            'Deskripsi',
+            'Tags',
         ];
 
         $rows = [$headers];
@@ -192,7 +208,7 @@ class DocumentController extends Controller
             ->when($user->role->name === 'admin_unit', function ($q) use ($user) {
                 $q->where(function ($sub) use ($user) {
                     $sub->whereDoesntHave('allowedUnits')
-                        ->orWhereHas('allowedUnits', fn ($u) => $u->where('units.id', $user->unit_id));
+                        ->orWhereHas('allowedUnits', fn($u) => $u->where('units.id', $user->unit_id));
                 });
             })
             ->orderBy('name')
@@ -220,7 +236,8 @@ class DocumentController extends Controller
                 $request->file('docx_file'),
                 $user,
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            logger()->error('Document upload failed: ' . $e->getMessage(), ['exception' => $e]);
             return back()->withInput()
                 ->with('error', 'Failed to upload document. Please try again.');
         }
@@ -434,10 +451,10 @@ class DocumentController extends Controller
 
         $activeDocuments = $document->status === 'active'
             ? Document::active()
-                ->whereNull('replaced_by_id')
-                ->where('id', '!=', $document->id)
-                ->orderBy('title')
-                ->get(['id', 'number', 'title'])
+            ->whereNull('replaced_by_id')
+            ->where('id', '!=', $document->id)
+            ->orderBy('title')
+            ->get(['id', 'number', 'title'])
             : collect();
 
         return view('admin.documents.show', compact('document', 'activeDocuments'));
