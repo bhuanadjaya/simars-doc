@@ -120,7 +120,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,ad
             Route::post('users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
             Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
-            Route::resource('units', UnitController::class)->only(['index', 'create', 'store']);
+            Route::resource('units', UnitController::class)->only(['index', 'create', 'store', 'edit', 'update']);
             Route::post('units/{unit}/deactivate', [UnitController::class, 'deactivate'])->name('units.deactivate');
             Route::post('units/{unit}/activate', [UnitController::class, 'activate'])->name('units.activate');
         });

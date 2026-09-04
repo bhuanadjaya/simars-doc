@@ -32,16 +32,52 @@ class NoEmbeddedScripts implements ValidationRule
             return false;
         }
 
-        // PDF JavaScript indicators
-        $patterns = ['/JS', '/JavaScript', '/OpenAction', '/Launch', '/AA'];
+        return $this->hasDangerousName($this->pdfStructuralContent($content));
+    }
 
-        foreach ($patterns as $pattern) {
-            if (str_contains($content, $pattern)) {
-                return true;
+    /**
+     * Ambil bagian struktural PDF: seluruh isi di luar stream, ditambah isi
+     * stream yang berhasil di-inflate (object stream berisi dictionary asli).
+     * Data stream mentah dibuang karena byte acak di dalamnya sering
+     * memunculkan pola seperti "/AA" secara kebetulan pada file hasil scan.
+     */
+    private function pdfStructuralContent(string $content): string
+    {
+        $structural = '';
+        $offset     = 0;
+
+        while (($start = strpos($content, 'stream', $offset)) !== false) {
+            $structural .= substr($content, $offset, $start - $offset);
+
+            $end = strpos($content, 'endstream', $start);
+            if ($end === false) {
+                return $structural;
             }
+
+            $raw      = ltrim(substr($content, $start + 6, $end - $start - 6), "\r\n");
+            $inflated = @gzuncompress($raw);
+            if ($inflated !== false) {
+                $structural .= "\n" . $inflated . "\n";
+            }
+
+            $offset = $end + 9;
         }
 
-        return false;
+        return $structural . substr($content, $offset);
+    }
+
+    /**
+     * Nama PDF berakhir pada delimiter atau whitespace, jadi "/AA" hanya cocok
+     * bila benar-benar key /AA dan bukan awalan dari nama lain.
+     */
+    private function hasDangerousName(string $content): bool
+    {
+        $names = ['JS', 'JavaScript', 'OpenAction', 'Launch', 'AA'];
+
+        return preg_match(
+            '~/(' . implode('|', $names) . ')(?=[\s/<>\[\]()%]|$)~',
+            $content
+        ) === 1;
     }
 
     private function docxContainsMacro(UploadedFile $file): bool

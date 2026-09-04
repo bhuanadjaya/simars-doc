@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUnitRequest;
+use App\Http\Requests\UpdateUnitRequest;
 use App\Models\Document;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
@@ -53,6 +54,54 @@ class UnitController extends Controller
 
         return redirect()->route('admin.units.index')
             ->with('success', 'Unit berhasil ditambahkan.');
+    }
+
+    public function edit(Unit $unit): View
+    {
+        $parentUnits = Unit::where('is_active', true)
+            ->where('id', '!=', $unit->id)
+            ->whereNotIn('id', $this->descendantIds($unit))
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.units.edit', compact('unit', 'parentUnits'));
+    }
+
+    public function update(UpdateUnitRequest $request, Unit $unit): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $unit->update([
+            'code'      => $validated['code'],
+            'name'      => $validated['name'],
+            'parent_id' => $validated['parent_id'] ?? null,
+        ]);
+
+        return redirect()->route('admin.units.index')
+            ->with('success', 'Unit berhasil diperbarui.');
+    }
+
+    /**
+     * Kumpulkan seluruh id turunan unit agar tidak ditawarkan sebagai unit induk,
+     * karena akan membentuk hierarki melingkar.
+     *
+     * @return array<int, string>
+     */
+    private function descendantIds(Unit $unit): array
+    {
+        $descendants = [];
+        $currentIds  = [$unit->id];
+
+        while ($currentIds !== []) {
+            $currentIds = Unit::whereIn('parent_id', $currentIds)
+                ->pluck('id')
+                ->diff($descendants)
+                ->all();
+
+            $descendants = array_merge($descendants, $currentIds);
+        }
+
+        return $descendants;
     }
 
     public function deactivate(Unit $unit): RedirectResponse

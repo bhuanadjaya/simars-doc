@@ -83,6 +83,11 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-1.5 justify-end">
+                                    <a href="{{ route('admin.units.edit', $unit) }}"
+                                        class="ina-button ina-button--secondary ina-button--sm"
+                                        title="Ubah unit">
+                                        <i class="ti ti-pencil text-sm"></i>
+                                    </a>
                                     @if ($unit->is_active)
                                         <form method="POST" action="{{ route('admin.units.deactivate', $unit) }}"
                                             class="form-deactivate inline">
