@@ -67,12 +67,21 @@ class NoEmbeddedScripts implements ValidationRule
     }
 
     /**
-     * Nama PDF berakhir pada delimiter atau whitespace, jadi "/AA" hanya cocok
-     * bila benar-benar key /AA dan bukan awalan dari nama lain.
+     * Hanya action yang benar-benar dapat dieksekusi yang diperiksa.
+     *
+     * /OpenAction dan /AA sengaja tidak dipakai sebagai penanda: keduanya hanya
+     * wadah, dan umum berisi destinasi halaman biasa seperti
+     * "/OpenAction[7 0 R/FitH null]" yang dipasang TCPDF di setiap dokumen.
+     * Bila wadah itu memang berisi script, payload-nya tetap tertangkap lewat
+     * /JS, /JavaScript, atau /Launch — termasuk saat diacu tidak langsung,
+     * karena object stream ikut di-inflate lebih dulu.
+     *
+     * Nama PDF berakhir pada delimiter atau whitespace, sehingga nama seperti
+     * /JavaScriptXyz atau subset font /AAAAAC+DejaVuSans tidak ikut cocok.
      */
     private function hasDangerousName(string $content): bool
     {
-        $names = ['JS', 'JavaScript', 'OpenAction', 'Launch', 'AA'];
+        $names = ['JS', 'JavaScript', 'Launch'];
 
         return preg_match(
             '~/(' . implode('|', $names) . ')(?=[\s/<>\[\]()%]|$)~',

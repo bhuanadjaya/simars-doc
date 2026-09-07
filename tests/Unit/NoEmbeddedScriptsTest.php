@@ -60,12 +60,44 @@ class NoEmbeddedScriptsTest extends TestCase
         );
     }
 
-    public function test_it_blocks_additional_action(): void
+    public function test_it_blocks_script_inside_an_additional_action(): void
     {
         $this->assertPdf(
-            "%PDF-1.4\n3 0 obj << /Type /Page /AA << /O 4 0 R >> >> endobj\n%%EOF",
+            "%PDF-1.4\n3 0 obj << /Type /Page /AA << /O << /S /JavaScript /JS (evil()) >> >> >> endobj\n%%EOF",
             true,
-            'PDF dengan key /AA harus ditolak'
+            'Script di dalam /AA harus ditolak'
+        );
+    }
+
+    public function test_it_blocks_script_referenced_indirectly_by_open_action(): void
+    {
+        $this->assertPdf(
+            "%PDF-1.4\n1 0 obj << /Type /Catalog /OpenAction 9 0 R >> endobj\n"
+                . "9 0 obj << /S /JavaScript /JS (evil()) >> endobj\n%%EOF",
+            true,
+            'Action yang diacu tidak langsung harus tetap ditolak'
+        );
+    }
+
+    public function test_it_allows_open_action_that_is_only_a_page_destination(): void
+    {
+        // Bentuk bawaan TCPDF pada dokumen pemerintah bertanda tangan elektronik:
+        // /OpenAction berisi array destinasi halaman, bukan action dictionary.
+        $this->assertPdf(
+            "%PDF-1.7\n28 0 obj << /Type /Catalog /PageMode /UseNone "
+                . "/OpenAction [7 0 R /FitH null] /PageLayout /SinglePage >> endobj\n"
+                . "7 0 obj << /Type /Page /MediaBox [0 0 595 935] >> endobj\n%%EOF",
+            false,
+            '/OpenAction berupa destinasi halaman tidak boleh ditolak'
+        );
+    }
+
+    public function test_it_allows_a_subset_font_name(): void
+    {
+        $this->assertPdf(
+            "%PDF-1.7\n5 0 obj << /Type /Font /BaseFont /AAAAAC+DejaVuSans >> endobj\n%%EOF",
+            false,
+            'Nama subset font tidak boleh dianggap key /AA'
         );
     }
 
