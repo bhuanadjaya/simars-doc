@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notification extends Model
 {
-    use HasUuids;
+    use HasUuids, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
-        'user_id', 'document_id', 'title', 'message', 'type', 'is_read', 'read_at',
+        'hospital_id', 'user_id', 'document_id', 'title', 'message', 'type', 'is_read', 'read_at',
     ];
 
     protected function casts(): array

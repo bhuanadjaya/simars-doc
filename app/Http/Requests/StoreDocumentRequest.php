@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoEmbeddedScripts;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,18 +15,38 @@ class StoreDocumentRequest extends FormRequest
 
     public function rules(): array
     {
+        $isObsolete = $this->input('target_status') === 'obsolete';
+
         return [
             'number'             => ['required', 'string', 'max:100'],
             'title'              => ['required', 'string', 'max:255'],
-            'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
+            'document_type_id'   => ['required', 'string', 'exists:document_types,id', function ($attribute, $value, $fail) {
+                $user = auth()->user();
+                if ($user->role->name === 'super_admin') return;
+
+                $docType = \App\Models\DocumentType::find($value);
+                if (!$docType || !$docType->allowedUnits()->exists()) return;
+
+                if (!$docType->allowedUnits()->where('units.id', $user->unit_id)->exists()) {
+                    $fail('Unit Anda tidak diizinkan mengupload jenis dokumen ini.');
+                }
+            }],
             'owner_unit_id'      => ['required', 'string', 'exists:units,id'],
-            'source'             => ['required', 'in:internal,external'],
+            'source'             => ['nullable', 'in:internal,external'],
             'effective_date'     => ['nullable', 'date'],
+            'expired_at'         => ['nullable', 'date'],
+            'reminder_months'    => ['nullable', 'integer', 'min:1', 'max:60'],
+            'visibility'         => ['nullable', 'in:public,restricted'],
             'description'        => ['nullable', 'string'],
             'tags'               => ['nullable', 'string', 'max:255'],
-            'parent_document_id'  => ['nullable', 'string', Rule::exists('documents', 'id')->where(fn ($q) => $q->where('status', 'active')->whereNull('replaced_by_id'))],
-            'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480'],
-            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480'],
+            'parent_document_id' => ['nullable', 'string', Rule::exists('documents', 'id')->where(fn ($q) => $q->where('status', 'active')->whereNull('replaced_by_id'))],
+            'target_status'      => ['nullable', 'in:active,obsolete'],
+            'obsolete_reason'    => [$isObsolete ? 'required' : 'nullable', 'string', 'max:1000'],
+            'obsolete_date'      => [$isObsolete ? 'required' : 'nullable', 'date'],
+            'extra_numbers'      => ['nullable', 'array'],
+            'extra_numbers.*'    => ['nullable', 'string', 'max:100'],
+            'pdf_file'           => ['required', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
+            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];
     }
 

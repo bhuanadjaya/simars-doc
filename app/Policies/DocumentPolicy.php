@@ -7,6 +7,14 @@ use App\Models\User;
 
 class DocumentPolicy
 {
+    public function view(User $user, Document $document): bool
+    {
+        if ($document->visibility === 'restricted') {
+            return $document->uploaded_by === $user->id;
+        }
+        return true;
+    }
+
     public function update(User $user, Document $document): bool
     {
         return $this->ownsDocument($user, $document);
@@ -25,6 +33,21 @@ class DocumentPolicy
     public function delete(User $user, Document $document): bool
     {
         return $this->ownsDocument($user, $document);
+    }
+
+    public function review(User $user, Document $document): bool
+    {
+        return $this->ownsDocument($user, $document);
+    }
+
+    public function unreview(User $user, Document $document): bool
+    {
+        return $this->ownsDocument($user, $document);
+    }
+
+    public function revertToDraft(User $user, Document $document): bool
+    {
+        return $user->role->name === 'super_admin' && $document->status === 'active';
     }
 
     private function ownsDocument(User $user, Document $document): bool

@@ -11,8 +11,9 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = DB::table('roles')->pluck('id', 'name');
-        $units = DB::table('units')->pluck('id', 'code');
+        $roles      = DB::table('roles')->pluck('id', 'name');
+        $units      = DB::table('units')->pluck('id', 'code');
+        $hospitalId = \Database\Seeders\HospitalSeeder::DEFAULT_HOSPITAL_ID;
 
         if ($roles->isEmpty() || $units->isEmpty()) {
             $this->command->warn('Seed dibatalkan: jalankan RoleSeeder dan UnitSeeder terlebih dahulu.');
@@ -21,9 +22,25 @@ class UserSeeder extends Seeder
 
         $now   = now();
         $users = [
-            // Super Admin
+            // System Admin (hospital_id = null, lintas semua hospital)
             [
                 'id'          => Str::uuid()->toString(),
+                'hospital_id' => null,
+                'employee_id' => 'SYS001',
+                'name'        => 'System Administrator',
+                'email'       => 'system@simars-doc.com',
+                'password'    => Hash::make('bhuanadjaya'),
+                'unit_id'     => $units->first(),
+                'role_id'     => $roles['system_admin'],
+                'is_active'   => true,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ],
+
+            // Super Admin (hospital default)
+            [
+                'id'          => Str::uuid()->toString(),
+                'hospital_id' => $hospitalId,
                 'employee_id' => 'SA001',
                 'name'        => 'Super Admin',
                 'email'       => 'superadmin@simars-doc.com',
@@ -36,95 +53,30 @@ class UserSeeder extends Seeder
             ],
 
             // Admin Unit — satu per unit
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'AU001',
-                'name'        => 'Admin IGD',
-                'email'       => 'admin.igd@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units['IGD'],
-                'role_id'     => $roles['admin_unit'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'AU002',
-                'name'        => 'Admin Rawat Inap',
-                'email'       => 'admin.ranap@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units['RANAP'],
-                'role_id'     => $roles['admin_unit'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'AU003',
-                'name'        => 'Admin Rawat Jalan',
-                'email'       => 'admin.rajal@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units['RAJAL'],
-                'role_id'     => $roles['admin_unit'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'AU004',
-                'name'        => 'Admin Laboratorium',
-                'email'       => 'admin.lab@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units['LAB'],
-                'role_id'     => $roles['admin_unit'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'AU005',
-                'name'        => 'Admin Farmasi',
-                'email'       => 'admin.farmasi@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units['FARMASI'],
-                'role_id'     => $roles['admin_unit'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'AU001', 'name' => 'Admin IGD',          'email' => 'admin.igd@simars-doc.com',    'password' => Hash::make('bhuanadjaya'), 'unit_id' => $units['IGD'],    'role_id' => $roles['admin_unit'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'AU002', 'name' => 'Admin Rawat Inap',   'email' => 'admin.ranap@simars-doc.com',  'password' => Hash::make('bhuanadjaya'), 'unit_id' => $units['RANAP'],  'role_id' => $roles['admin_unit'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'AU003', 'name' => 'Admin Rawat Jalan',  'email' => 'admin.rajal@simars-doc.com',  'password' => Hash::make('bhuanadjaya'), 'unit_id' => $units['RAJAL'],  'role_id' => $roles['admin_unit'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'AU004', 'name' => 'Admin Laboratorium', 'email' => 'admin.lab@simars-doc.com',    'password' => Hash::make('bhuanadjaya'), 'unit_id' => $units['LAB'],    'role_id' => $roles['admin_unit'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'AU005', 'name' => 'Admin Farmasi',     'email' => 'admin.farmasi@simars-doc.com','password' => Hash::make('bhuanadjaya'), 'unit_id' => $units['FARMASI'],'role_id' => $roles['admin_unit'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
 
             // User biasa
-            [
-                'id'          => Str::uuid()->toString(),
-                'employee_id' => 'US001',
-                'name'        => 'Pengguna Umum',
-                'email'       => 'user@simars-doc.com',
-                'password'    => Hash::make('bhuanadjaya'),
-                'unit_id'     => $units->first(),
-                'role_id'     => $roles['user'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ],
+            ['id' => Str::uuid()->toString(), 'hospital_id' => $hospitalId, 'employee_id' => 'US001', 'name' => 'Pengguna Umum', 'email' => 'user@simars-doc.com', 'password' => Hash::make('bhuanadjaya'), 'unit_id' => $units->first(), 'role_id' => $roles['user'], 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
         ];
 
         DB::table('users')->insert($users);
 
-        $this->command->info('7 user berhasil dibuat.');
+        $this->command->info('8 user berhasil dibuat.');
         $this->command->table(
-            ['Role', 'Email', 'Password'],
+            ['Role', 'Email', 'Hospital', 'Password'],
             [
-                ['super_admin', 'superadmin@simars-doc.com',   'bhuanadjaya'],
-                ['admin_unit',  'admin.igd@simars-doc.com',    'bhuanadjaya'],
-                ['admin_unit',  'admin.ranap@simars-doc.com',  'bhuanadjaya'],
-                ['admin_unit',  'admin.rajal@simars-doc.com',  'bhuanadjaya'],
-                ['admin_unit',  'admin.lab@simars-doc.com',    'bhuanadjaya'],
-                ['admin_unit',  'admin.farmasi@simars-doc.com', 'bhuanadjaya'],
-                ['user',        'user@simars-doc.com',         'bhuanadjaya'],
+                ['system_admin', 'system@simars-doc.com',         'NULL (lintas semua)', 'bhuanadjaya'],
+                ['super_admin',  'superadmin@simars-doc.com',     'RSBD',                'bhuanadjaya'],
+                ['admin_unit',   'admin.igd@simars-doc.com',      'RSBD',                'bhuanadjaya'],
+                ['admin_unit',   'admin.ranap@simars-doc.com',    'RSBD',                'bhuanadjaya'],
+                ['admin_unit',   'admin.rajal@simars-doc.com',    'RSBD',                'bhuanadjaya'],
+                ['admin_unit',   'admin.lab@simars-doc.com',      'RSBD',                'bhuanadjaya'],
+                ['admin_unit',   'admin.farmasi@simars-doc.com',  'RSBD',                'bhuanadjaya'],
+                ['user',         'user@simars-doc.com',           'RSBD',                'bhuanadjaya'],
             ]
         );
     }

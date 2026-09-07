@@ -13,6 +13,12 @@ class RoleSeeder extends Seeder
         $roles = [
             [
                 'id'          => Str::uuid(),
+                'name'        => 'system_admin',
+                'description' => 'System-level admin: manage all hospitals and global settings',
+                'permissions' => json_encode(['*']),
+            ],
+            [
+                'id'          => Str::uuid(),
                 'name'        => 'super_admin',
                 'description' => 'Full access: upload, publish, obsolete, delete documents, manage users',
                 'permissions' => json_encode([
@@ -54,6 +60,6 @@ class RoleSeeder extends Seeder
             ],
         ];
 
-        DB::table('roles')->insert($roles);
+        DB::table('roles')->insertOrIgnore($roles);
     }
 }

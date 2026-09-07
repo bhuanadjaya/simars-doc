@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ArrayExport;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Document;
@@ -9,7 +10,8 @@ use App\Models\DocumentType;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\View\View;
 
 class ReportController extends Controller
@@ -43,7 +45,7 @@ class ReportController extends Controller
         return view('admin.reports.master-document-list', compact('documents', 'documentTypes', 'units', 'years'));
     }
 
-    public function exportExcel(Request $request): Response
+    public function exportExcel(Request $request): BinaryFileResponse
     {
         $query = Document::active()->with(['documentType', 'ownerUnit', 'uploader']);
 
@@ -59,8 +61,8 @@ class ReportController extends Controller
 
         $documents = $query->orderBy('number')->get();
 
-        $rows   = [];
-        $rows[] = ['No', 'Nomor Dokumen', 'Judul', 'Jenis Dokumen', 'Unit Pemilik', 'Sumber', 'Tanggal Berlaku', 'Tanggal Publikasi', 'Diunggah Oleh'];
+        $headers = ['No', 'Nomor Dokumen', 'Judul', 'Jenis Dokumen', 'Unit Pemilik', 'Sumber', 'Tanggal Berlaku', 'Tanggal Publikasi', 'Diunggah Oleh'];
+        $rows    = [];
 
         foreach ($documents as $i => $doc) {
             $rows[] = [
@@ -76,17 +78,9 @@ class ReportController extends Controller
             ];
         }
 
-        $csv = '';
-        foreach ($rows as $row) {
-            $csv .= implode(';', array_map(fn ($v) => '"' . str_replace('"', '""', $v) . '"', $row)) . "\n";
-        }
+        $filename = 'daftar-induk-dokumen-' . now()->format('Ymd') . '.xlsx';
 
-        $filename = 'daftar-induk-dokumen-' . now()->format('Ymd') . '.csv';
-
-        return response($csv, 200, [
-            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        return Excel::download(new ArrayExport($rows, $headers), $filename);
     }
 
     public function exportPdf(Request $request): View
@@ -135,7 +129,7 @@ class ReportController extends Controller
         return view('admin.reports.activity-log', compact('logs', 'users', 'actions'));
     }
 
-    public function exportActivityLogExcel(Request $request): Response
+    public function exportActivityLogExcel(Request $request): BinaryFileResponse
     {
         $query = ActivityLog::with(['user', 'document'])->latest();
 
@@ -154,8 +148,8 @@ class ReportController extends Controller
 
         $logs = $query->limit(5000)->get();
 
-        $rows   = [];
-        $rows[] = ['Waktu', 'Pengguna', 'Aksi', 'Dokumen', 'IP Address'];
+        $headers = ['Waktu', 'Pengguna', 'Aksi', 'Dokumen', 'IP Address'];
+        $rows    = [];
 
         foreach ($logs as $log) {
             $rows[] = [
@@ -167,17 +161,9 @@ class ReportController extends Controller
             ];
         }
 
-        $csv = '';
-        foreach ($rows as $row) {
-            $csv .= implode(';', array_map(fn ($v) => '"' . str_replace('"', '""', $v) . '"', $row)) . "\n";
-        }
+        $filename = 'log-aktivitas-' . now()->format('Ymd') . '.xlsx';
 
-        $filename = 'log-aktivitas-' . now()->format('Ymd') . '.csv';
-
-        return response($csv, 200, [
-            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        return Excel::download(new ArrayExport($rows, $headers), $filename);
     }
 
     public function usageStatistics(): View

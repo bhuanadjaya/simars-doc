@@ -10,7 +10,12 @@ class ActivityLogService
 {
     public function log(User $user, string $action, ?Document $document = null, ?array $detail = null): void
     {
+        if ($user->hospital_id === null) {
+            return;
+        }
+
         ActivityLog::create([
+            'hospital_id' => $user->hospital_id,
             'user_id'     => $user->id,
             'document_id' => $document?->id,
             'action'      => $action,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,26 +12,47 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasUuids, SoftDeletes, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
+        'hospital_id',
         'number', 'title', 'document_type_id', 'owner_unit_id', 'uploaded_by',
         'source', 'revision_number', 'description', 'tags', 'status',
-        'effective_date', 'published_at', 'obsolete_date', 'obsolete_reason',
+        'effective_date', 'expired_at', 'reminder_months', 'visibility',
+        'published_at', 'obsolete_date', 'obsolete_reason',
         'obsoleted_by', 'replaced_by_id', 'parent_document_id',
+        'is_reviewed', 'reviewed_at', 'reviewed_by', 'review_notes',
     ];
 
     protected function casts(): array
     {
         return [
             'effective_date'  => 'date',
+            'expired_at'      => 'date',
             'published_at'    => 'date',
             'obsolete_date'   => 'date',
+            'reviewed_at'     => 'datetime',
             'revision_number' => 'integer',
+            'reminder_months' => 'integer',
+            'is_reviewed'     => 'boolean',
         ];
+    }
+
+    // ── Global Scopes ─────────────────────────────────────────────────
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('visibility', function ($query) {
+            $user = auth()->user();
+            if (! $user) return;
+            $query->where(function ($q) use ($user) {
+                $q->where('visibility', 'public')
+                  ->orWhere('uploaded_by', $user->id);
+            });
+        });
     }
 
     // ── Scopes ────────────────────────────────────────────────────────
@@ -61,6 +83,11 @@ class Document extends Model
         return $this->belongsTo(User::class, 'obsoleted_by');
     }
 
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
     public function files(): HasMany
     {
         return $this->hasMany(DocumentFile::class);
@@ -89,5 +116,10 @@ class Document extends Model
     public function replaces(): HasOne
     {
         return $this->hasOne(Document::class, 'replaced_by_id');
+    }
+
+    public function documentNumbers(): HasMany
+    {
+        return $this->hasMany(DocumentNumber::class)->orderBy('sort_order');
     }
 }

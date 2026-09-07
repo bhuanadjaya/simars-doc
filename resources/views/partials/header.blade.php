@@ -50,24 +50,33 @@
 
       <div class="w-px h-8 bg-gray-200"></div>
 
-      {{-- User info --}}
-      <div class="flex items-center gap-2 text-sm">
-        <div class="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-semibold text-xs shrink-0">
-          {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
-        </div>
-        <span class="text-gray-700 font-medium hidden md:block max-w-[120px] truncate">{{ auth()->user()->name }}</span>
-      </div>
-
-      <div class="w-px h-8 bg-gray-200"></div>
-
-      {{-- Logout --}}
-      <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit" class="ina-button ina-button--secondary ina-button--sm flex items-center gap-1.5">
-          <i class="ti ti-logout text-sm"></i>
-          <span>Keluar</span>
+      {{-- Profile dropdown --}}
+      <div class="relative" id="profile-wrapper">
+        <button id="btn-profile"
+          class="flex items-center gap-2 text-sm rounded-lg px-2 py-1.5 hover:bg-gray-100 transition-colors">
+          <div class="w-8 h-8 rounded-full bg-[#2596be] text-white flex items-center justify-center font-semibold text-xs shrink-0">
+            {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+          </div>
+          <span class="text-gray-700 font-medium hidden md:block max-w-[120px] truncate">{{ auth()->user()->name }}</span>
+          <i class="ti ti-chevron-down text-xs text-gray-400 hidden md:block"></i>
         </button>
-      </form>
+
+        <div id="profile-dropdown"
+          class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+          <a href="{{ route('profile.show') }}"
+            class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <i class="ti ti-user text-gray-400 text-base"></i> Profil
+          </a>
+          <div class="border-t border-gray-100 my-1"></div>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit"
+              class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+              <i class="ti ti-logout text-base"></i> Keluar
+            </button>
+          </form>
+        </div>
+      </div>
     @endauth
   </div>
 </header>
@@ -104,6 +113,15 @@ $(document).ready(function () {
         if (!$(e.target).closest('#notif-wrapper').length) {
             $('#notif-dropdown').addClass('hidden');
         }
+        if (!$(e.target).closest('#profile-wrapper').length) {
+            $('#profile-dropdown').addClass('hidden');
+        }
+    });
+
+    $('#btn-profile').on('click', function (e) {
+        e.stopPropagation();
+        $('#profile-dropdown').toggleClass('hidden');
+        $('#notif-dropdown').addClass('hidden');
     });
 
     function loadNotifDropdown() {

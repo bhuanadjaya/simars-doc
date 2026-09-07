@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ArrayExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ObsoleteDocumentRequest;
 use App\Http\Requests\StoreDocumentRequest;
@@ -11,10 +12,13 @@ use App\Models\DocumentType;
 use App\Models\Unit;
 use App\Services\ActivityLogService;
 use App\Services\DocumentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 use Throwable;
@@ -59,8 +63,20 @@ class DocumentController extends Controller
             $q = $request->q;
             $query->where(function ($sub) use ($q) {
                 $sub->where('title', 'like', "%{$q}%")
-                    ->orWhere('number', 'like', "%{$q}%");
+                    ->orWhere('number', 'like', "%{$q}%")
+                    ->orWhereHas('documentNumbers', fn($dn) => $dn->where('number', 'like', "%{$q}%"));
             });
+        }
+        if ($request->filled('expired')) {
+            if ($request->expired === 'soon') {
+                $query->whereNotNull('expired_at')
+                    ->whereNotNull('reminder_months')
+                    ->whereRaw('expired_at >= CURDATE()')
+                    ->whereRaw('CURDATE() >= DATE_SUB(expired_at, INTERVAL reminder_months MONTH)');
+            } elseif ($request->expired === 'overdue') {
+                $query->whereNotNull('expired_at')
+                    ->whereRaw('expired_at < CURDATE()');
+            }
         }
 
         $documents     = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
@@ -72,14 +88,135 @@ class DocumentController extends Controller
         return view('admin.documents.index', compact('user', 'documents', 'documentTypes', 'units', 'counts'));
     }
 
+    public function searchParents(Request $request): JsonResponse
+    {
+        $q       = $request->get('q', '');
+        $exclude = $request->get('exclude');
+
+        $results = Document::active()
+            ->whereNull('replaced_by_id')
+            ->when($exclude, fn($query) => $query->where('id', '!=', $exclude))
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', "%{$q}%")
+                        ->orWhere('number', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('title')
+            ->limit(40)
+            ->get(['id', 'number', 'title'])
+            ->map(fn($doc) => [
+                'value' => $doc->id,
+                'text'  => $doc->number . ' — ' . $doc->title,
+            ]);
+
+        return response()->json($results);
+    }
+
+    public function exportExcel(Request $request): BinaryFileResponse
+    {
+        $user = auth()->user()->load('role', 'unit');
+
+        $query = Document::with(['documentType', 'ownerUnit', 'uploader', 'documentNumbers'])
+            ->withoutGlobalScope('visibility');
+
+        if ($user->role->name === 'admin_unit') {
+            $query->where('owner_unit_id', $user->unit_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('type')) {
+            $query->where('document_type_id', $request->type);
+        }
+        if ($request->filled('unit') && $user->role->name !== 'admin_unit') {
+            $query->where('owner_unit_id', $request->unit);
+        }
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('title', 'like', "%{$q}%")
+                    ->orWhere('number', 'like', "%{$q}%")
+                    ->orWhereHas('documentNumbers', fn($dn) => $dn->where('number', 'like', "%{$q}%"));
+            });
+        }
+
+        $documents = $query->orderBy('status')->orderBy('number')->get();
+
+        $headers = [
+            'No',
+            'Nomor Dokumen',
+            'Nomor Tambahan',
+            'Judul',
+            'Jenis Dokumen',
+            'Unit Pemilik',
+            'Status',
+            'Sumber',
+            'Nomor Revisi',
+            'Tanggal Berlaku',
+            'Tanggal Publikasi',
+            'Masa Berlaku s/d',
+            'Sudah Direview',
+            'Tanggal Review',
+            'Catatan Review',
+            'Tanggal Obsolet',
+            'Alasan Obsolet',
+            'Diunggah Oleh',
+            'Deskripsi',
+            'Tags',
+        ];
+
+        $rows = [$headers];
+
+        foreach ($documents as $i => $doc) {
+            $extraNumbers = $doc->documentNumbers->pluck('number')->implode(', ');
+            $rows[]       = [
+                $i + 1,
+                $doc->number,
+                $extraNumbers,
+                $doc->title,
+                $doc->documentType?->name ?? '',
+                $doc->ownerUnit?->name ?? '',
+                ucfirst($doc->status),
+                $doc->source === 'internal' ? 'Internal' : 'Eksternal',
+                $doc->revision_number == 0 ? 'Original' : 'Rev. ' . str_pad($doc->revision_number, 2, '0', STR_PAD_LEFT),
+                $doc->effective_date?->format('d/m/Y') ?? '',
+                $doc->published_at?->format('d/m/Y') ?? '',
+                $doc->expired_at?->format('d/m/Y') ?? '',
+                $doc->is_reviewed ? 'Ya' : 'Tidak',
+                $doc->reviewed_at?->format('d/m/Y') ?? '',
+                $doc->review_notes ?? '',
+                $doc->obsolete_date?->format('d/m/Y') ?? '',
+                $doc->obsolete_reason ?? '',
+                $doc->uploader?->name ?? '',
+                $doc->description ?? '',
+                $doc->tags ?? '',
+            ];
+        }
+
+        $filename = 'dokumen-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new ArrayExport($rows, $headers), $filename);
+    }
+
     public function create(): View
     {
-        $user             = auth()->user()->load('role', 'unit');
-        $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
-        $units            = Unit::where('is_active', true)->orderBy('name')->get();
-        $availableParents = Document::active()->whereNull('replaced_by_id')->orderBy('title')->get(['id', 'number', 'title']);
+        $user = auth()->user()->load('role', 'unit');
 
-        return view('admin.documents.create', compact('user', 'documentTypes', 'units', 'availableParents'));
+        $documentTypes = DocumentType::where('is_active', true)
+            ->when($user->role->name === 'admin_unit', function ($q) use ($user) {
+                $q->where(function ($sub) use ($user) {
+                    $sub->whereDoesntHave('allowedUnits')
+                        ->orWhereHas('allowedUnits', fn($u) => $u->where('units.id', $user->unit_id));
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        $units = Unit::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.documents.create', compact('user', 'documentTypes', 'units'));
     }
 
     public function store(StoreDocumentRequest $request): RedirectResponse
@@ -99,7 +236,8 @@ class DocumentController extends Controller
                 $request->file('docx_file'),
                 $user,
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            logger()->error('Document upload failed: ' . $e->getMessage(), ['exception' => $e]);
             return back()->withInput()
                 ->with('error', 'Failed to upload document. Please try again.');
         }
@@ -118,7 +256,7 @@ class DocumentController extends Controller
 
         $this->authorize('update', $document);
 
-        $document->load(['documentType', 'ownerUnit', 'files', 'parentDocument']);
+        $document->load(['documentType', 'ownerUnit', 'files', 'parentDocument', 'documentNumbers']);
         $documentTypes    = DocumentType::where('is_active', true)->orderBy('name')->get();
         $availableParents = Document::active()
             ->whereNull('replaced_by_id')
@@ -246,24 +384,77 @@ class DocumentController extends Controller
 
         $contents = Storage::disk('local')->get($pdfFile->file_path);
 
+        $disposition = \Symfony\Component\HttpFoundation\HeaderUtils::makeDisposition(
+            \Symfony\Component\HttpFoundation\HeaderUtils::DISPOSITION_INLINE,
+            $pdfFile->original_filename,
+            'document.pdf'
+        );
+
         return response($contents, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $pdfFile->original_filename . '"',
+            'Content-Type'           => 'application/pdf',
+            'Content-Disposition'    => $disposition,
+            'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    public function review(Request $request, Document $document): RedirectResponse
+    {
+        $this->authorize('review', $document);
+        $validated = $request->validate([
+            'reviewed_at'  => ['required', 'date'],
+            'review_notes' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $user = auth()->user()->load('role');
+        $this->documentService->review(
+            $document,
+            $user,
+            $validated['review_notes'],
+            \Carbon\Carbon::parse($validated['reviewed_at'])
+        );
+        $this->activityLog->log($user, 'review_document', $document);
+
+        return back()->with('success', 'Dokumen "' . $document->title . '" berhasil ditandai sebagai direview.');
+    }
+
+    public function unreview(Document $document): RedirectResponse
+    {
+        $this->authorize('unreview', $document);
+
+        $user = auth()->user()->load('role');
+        $this->documentService->unreview($document);
+        $this->activityLog->log($user, 'unreview_document', $document);
+
+        return back()->with('success', 'Review dokumen "' . $document->title . '" berhasil dibatalkan.');
+    }
+
+    public function revertToDraft(Document $document): RedirectResponse
+    {
+        $this->authorize('revertToDraft', $document);
+
+        $document->update([
+            'status'      => 'draft',
+            'published_at' => null,
+        ]);
+
+        $user = auth()->user()->load('role');
+        $this->activityLog->log($user, 'revert_to_draft', $document);
+
+        return back()->with('success', 'Dokumen "' . $document->title . '" dikembalikan ke Draft.');
     }
 
     public function show(Document $document): View
     {
-        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy']);
+        $this->authorize('view', $document);
 
-        // For obsolete modal: only show active docs that don't have a replacement yet
-        // (exclude self and any doc already claimed by another)
+        $document->load(['documentType', 'ownerUnit', 'uploader', 'files', 'parentDocument', 'replacedBy', 'reviewer', 'documentNumbers']);
+
         $activeDocuments = $document->status === 'active'
             ? Document::active()
-                ->whereNull('replaced_by_id')
-                ->where('id', '!=', $document->id)
-                ->orderBy('title')
-                ->get(['id', 'number', 'title'])
+            ->whereNull('replaced_by_id')
+            ->where('id', '!=', $document->id)
+            ->orderBy('title')
+            ->get(['id', 'number', 'title'])
             : collect();
 
         return view('admin.documents.show', compact('document', 'activeDocuments'));

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendDocumentNotifications;
 use App\Models\Document;
 use App\Models\DocumentFile;
+use App\Models\DocumentNumber;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -16,23 +17,45 @@ class DocumentService
     public function store(array $data, UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document
     {
         $uploadedPaths = [];
+        $targetStatus  = $data['target_status'] ?? 'active';
+        $extraNumbers  = array_filter($data['extra_numbers'] ?? []);
+        unset($data['target_status'], $data['extra_numbers']);
 
         try {
-            return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths) {
-                // Auto-calculate revision_number from parent
+            return DB::transaction(function () use ($data, $pdfFile, $docxFile, $uploader, &$uploadedPaths, $targetStatus, $extraNumbers) {
                 $revisionNumber = 0;
                 if (! empty($data['parent_document_id'])) {
-                    $parent = Document::find($data['parent_document_id']);
+                    $parent = Document::withoutGlobalScope('visibility')->find($data['parent_document_id']);
                     $revisionNumber = $parent ? ($parent->revision_number + 1) : 0;
                 }
 
-                $document = Document::create(array_merge($data, [
+                $baseData = array_merge($data, [
+                    'hospital_id'     => $uploader->hospital_id,
                     'uploaded_by'     => $uploader->id,
-                    'status'          => 'draft',
                     'revision_number' => $revisionNumber,
-                ]));
+                    'visibility'      => $data['visibility'] ?? 'public',
+                ]);
 
-                $document->load('ownerUnit');
+                if ($targetStatus === 'obsolete') {
+                    $baseData['status']      = 'obsolete';
+                    $baseData['is_reviewed'] = true;
+                    $baseData['reviewed_at'] = now();
+                    $baseData['reviewed_by'] = $uploader->id;
+                } else {
+                    $baseData['status'] = 'draft';
+                    unset($baseData['obsolete_reason'], $baseData['obsolete_date']);
+                }
+
+                $document = Document::create($baseData);
+                $document->load('hospital', 'ownerUnit');
+
+                foreach (array_values($extraNumbers) as $i => $num) {
+                    DocumentNumber::create([
+                        'document_id' => $document->id,
+                        'number'      => $num,
+                        'sort_order'  => $i + 1,
+                    ]);
+                }
 
                 // PDF (required)
                 $pdfPath = $this->saveFile($pdfFile, $document);
@@ -93,12 +116,12 @@ class DocumentService
 
             // Auto-link: set parent's replaced_by_id if not already set
             if ($document->parent_document_id) {
-                Document::where('id', $document->parent_document_id)
+                Document::withoutGlobalScope('visibility')
+                    ->where('id', $document->parent_document_id)
                     ->whereNull('replaced_by_id')
                     ->update(['replaced_by_id' => $document->id]);
             }
 
-            // Load unit users for notification dispatch
             $recipients = \App\Models\User::where('unit_id', $document->owner_unit_id)
                 ->where('is_active', true)
                 ->whereNull('deleted_at')
@@ -129,9 +152,11 @@ class DocumentService
                 'obsolete_reason' => $reason,
                 'obsoleted_by'    => $actor->id,
                 'replaced_by_id'  => $replacedById ?: null,
+                'is_reviewed'     => true,
+                'reviewed_at'     => now(),
+                'reviewed_by'     => $actor->id,
             ]);
 
-            // Notify users who previously downloaded this document
             $downloaderIds = \App\Models\ActivityLog::where('document_id', $document->id)
                 ->where('action', 'download_document')
                 ->distinct('user_id')
@@ -156,22 +181,55 @@ class DocumentService
         });
     }
 
+    public function review(Document $document, User $actor, string $notes, \Carbon\Carbon $reviewedAt): void
+    {
+        $document->update([
+            'is_reviewed'  => true,
+            'reviewed_at'  => $reviewedAt,
+            'reviewed_by'  => $actor->id,
+            'review_notes' => $notes,
+            'expired_at'   => $reviewedAt->copy()->addYears(2),
+        ]);
+    }
+
+    public function unreview(Document $document): void
+    {
+        $document->update([
+            'is_reviewed'  => false,
+            'reviewed_at'  => null,
+            'reviewed_by'  => null,
+            'review_notes' => null,
+        ]);
+    }
+
     public function update(Document $document, array $data, ?UploadedFile $pdfFile, ?UploadedFile $docxFile, User $uploader): Document
     {
-        $newPaths = [];
-        $oldPaths = [];
+        $newPaths     = [];
+        $oldPaths     = [];
+        $extraNumbers = array_filter($data['extra_numbers'] ?? []);
+        unset($data['extra_numbers']);
 
         try {
-            $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths) {
-                // Recalculate revision_number if parent changed
+            $result = DB::transaction(function () use ($document, $data, $pdfFile, $docxFile, $uploader, &$newPaths, &$oldPaths, $extraNumbers) {
                 $newParentId = $data['parent_document_id'] ?? null;
                 if ($newParentId !== $document->parent_document_id) {
-                    $parent = $newParentId ? Document::find($newParentId) : null;
+                    $parent = $newParentId
+                        ? Document::withoutGlobalScope('visibility')->find($newParentId)
+                        : null;
                     $data['revision_number'] = $parent ? ($parent->revision_number + 1) : 0;
                 }
 
                 $document->update($data);
-                $document->load('ownerUnit');
+
+                $document->documentNumbers()->delete();
+                foreach (array_values($extraNumbers) as $i => $num) {
+                    DocumentNumber::create([
+                        'document_id' => $document->id,
+                        'number'      => $num,
+                        'sort_order'  => $i + 1,
+                    ]);
+                }
+                $document->load('hospital', 'ownerUnit');
 
                 if ($pdfFile) {
                     $existing = $document->files()->where('file_type', 'pdf')->first();
@@ -218,7 +276,6 @@ class DocumentService
                 return $document->fresh(['documentType', 'ownerUnit', 'uploader', 'files']);
             });
 
-            // Delete old physical files only after transaction commits
             foreach ($oldPaths as $path) {
                 Storage::disk('local')->delete($path);
             }
@@ -234,9 +291,10 @@ class DocumentService
 
     private function saveFile(UploadedFile $file, Document $document): string
     {
-        $unitCode = $document->ownerUnit->code;
-        $year     = now()->year;
-        $dir      = "documents/{$unitCode}/{$year}/{$document->id}";
+        $hospitalCode = $document->hospital?->code ?? 'default';
+        $unitCode     = $document->ownerUnit->code;
+        $year         = now()->year;
+        $dir          = "documents/{$hospitalCode}/{$unitCode}/{$year}/{$document->id}";
 
         return $file->store($dir, 'local');
     }

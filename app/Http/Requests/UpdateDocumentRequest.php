@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoEmbeddedScripts;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,16 +16,21 @@ class UpdateDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'number'           => ['required', 'string', 'max:100'],
-            'title'            => ['required', 'string', 'max:255'],
-            'document_type_id' => ['required', 'string', 'exists:document_types,id'],
-            'source'           => ['required', 'in:internal,external'],
-            'effective_date'   => ['nullable', 'date'],
-            'description'      => ['nullable', 'string'],
-            'tags'             => ['nullable', 'string', 'max:255'],
+            'number'             => ['required', 'string', 'max:100'],
+            'title'              => ['required', 'string', 'max:255'],
+            'document_type_id'   => ['required', 'string', 'exists:document_types,id'],
+            'source'             => ['nullable', 'in:internal,external'],
+            'effective_date'     => ['nullable', 'date'],
+            'expired_at'         => ['nullable', 'date'],
+            'reminder_months'    => ['nullable', 'integer', 'min:1', 'max:60'],
+            'visibility'         => ['nullable', 'in:public,restricted'],
+            'description'        => ['nullable', 'string'],
+            'tags'               => ['nullable', 'string', 'max:255'],
             'parent_document_id' => ['nullable', 'string', Rule::exists('documents', 'id')->where(fn ($q) => $q->where('status', 'active')->whereNull('replaced_by_id'))],
-            'pdf_file'         => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
-            'docx_file'        => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480'],
+            'extra_numbers'      => ['nullable', 'array'],
+            'extra_numbers.*'    => ['nullable', 'string', 'max:100'],
+            'pdf_file'           => ['nullable', 'file', 'mimes:pdf', 'max:20480', new NoEmbeddedScripts()],
+            'docx_file'          => ['nullable', 'file', 'mimes:docx,vnd.openxmlformats-officedocument.wordprocessingml.document', 'max:20480', new NoEmbeddedScripts()],
         ];
     }
 

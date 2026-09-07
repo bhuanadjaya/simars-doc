@@ -14,6 +14,29 @@
         </a>
     </div>
 
+    {{-- Obsolete banner --}}
+    @if ($document->status === 'obsolete')
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+            <i class="ti ti-archive text-red-500 text-xl mt-0.5 shrink-0"></i>
+            <div>
+                <p class="text-sm font-medium text-red-800">Dokumen ini sudah tidak berlaku (Obsolete)</p>
+                @if ($document->obsolete_reason)
+                    <p class="text-sm text-red-700 mt-0.5">{{ $document->obsolete_reason }}</p>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- Expired banner --}}
+    @if ($document->expired_at && $document->expired_at->isPast())
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+            <i class="ti ti-clock-x text-orange-500 text-xl mt-0.5 shrink-0"></i>
+            <p class="text-sm text-orange-800">
+                Masa berlaku dokumen ini telah berakhir pada <strong>{{ $document->expired_at->format('d/m/Y') }}</strong>.
+            </p>
+        </div>
+    @endif
+
     {{-- Replaced-by banner --}}
     @if ($document->replacedBy)
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-start gap-3">

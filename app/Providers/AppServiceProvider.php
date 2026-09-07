@@ -21,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
 
             $role = $user->role->name ?? '';
 
+            if ($role === 'system_admin') return '/system/hospitals';
+
             return in_array($role, ['super_admin', 'admin_unit', 'auditor'])
                 ? '/admin'
                 : '/portal/documents';

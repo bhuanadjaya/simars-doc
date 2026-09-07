@@ -18,7 +18,10 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = User::with(['unit', 'role'])->latest();
+        $hospitalId = auth()->user()->hospital_id;
+        $query = User::with(['unit', 'role'])
+            ->where('hospital_id', $hospitalId)
+            ->latest();
 
         if ($request->filled('unit')) {
             $query->where('unit_id', $request->unit);
@@ -51,7 +54,7 @@ class UserController extends Controller
     public function create(): View
     {
         $units = Unit::where('is_active', true)->orderBy('name')->get();
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'system_admin')->orderBy('name')->get();
 
         return view('admin.users.create', compact('units', 'roles'));
     }
@@ -61,6 +64,7 @@ class UserController extends Controller
         $validated = $request->validated();
 
         User::create([
+            'hospital_id' => auth()->user()->hospital_id,
             'name'        => $validated['name'],
             'employee_id' => $validated['employee_id'] ?? null,
             'email'       => $validated['email'],
@@ -76,14 +80,18 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        abort_if($user->hospital_id !== auth()->user()->hospital_id, 403);
+
         $units = Unit::where('is_active', true)->orderBy('name')->get();
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'system_admin')->orderBy('name')->get();
 
         return view('admin.users.edit', compact('user', 'units', 'roles'));
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        abort_if($user->hospital_id !== auth()->user()->hospital_id, 403);
+
         $validated = $request->validated();
 
         $user->update([
@@ -100,6 +108,7 @@ class UserController extends Controller
 
     public function deactivate(User $user): RedirectResponse
     {
+        abort_if($user->hospital_id !== auth()->user()->hospital_id, 403);
         abort_if($user->id === auth()->id(), 403, 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
 
         $user->update(['is_active' => false]);
@@ -110,6 +119,8 @@ class UserController extends Controller
 
     public function activate(User $user): RedirectResponse
     {
+        abort_if($user->hospital_id !== auth()->user()->hospital_id, 403);
+
         $user->update(['is_active' => true]);
 
         return redirect()->route('admin.users.index')
@@ -118,6 +129,7 @@ class UserController extends Controller
 
     public function resetPassword(User $user): RedirectResponse
     {
+        abort_if($user->hospital_id !== auth()->user()->hospital_id, 403);
         $newPassword = Str::password(12);
         $user->update(['password' => Hash::make($newPassword)]);
 

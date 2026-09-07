@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,12 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Unit extends Model
 {
-    use HasUuids;
+    use HasUuids, BelongsToHospital;
 
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['code', 'name', 'parent_id', 'is_active'];
+    protected $fillable = ['hospital_id', 'code', 'name', 'parent_id', 'is_active'];
 
     protected function casts(): array
     {

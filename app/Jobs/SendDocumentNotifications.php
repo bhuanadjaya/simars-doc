@@ -28,6 +28,7 @@ class SendDocumentNotifications implements ShouldQueue
     {
         $rows = $this->recipients->map(fn (User $user) => [
             'id'          => (string) \Illuminate\Support\Str::uuid(),
+            'hospital_id' => $user->hospital_id,
             'user_id'     => $user->id,
             'document_id' => $this->document->id,
             'title'       => $this->title,
